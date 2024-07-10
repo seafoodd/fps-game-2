@@ -17,7 +17,6 @@ public class CameraController : MonoSingleton<CameraController>
     public Vector2 look;
     [SerializeField] private float fovTransitionTime;
     [SerializeField] private float dashFovDif;
-    // private Controls controls;
 
     private void Start()
     {
@@ -26,27 +25,21 @@ public class CameraController : MonoSingleton<CameraController>
         currentFov = fov;
     }
 
-    // private void OnEnable()
-    // {
-    //     controls = new Controls();
-    //     controls.Enable();
-    // }
-    //
-    // private void OnDisable()
-    // {
-    //     controls.Dispose();
-    // }
-
     private void Update()
     {
         RotateCamera();
-        if(pc.dashing)
+        DashFov();
+    }
+
+    private void DashFov()
+    {
+        if (pc.dashing)
         {
-            if(Vector3.Dot(pc.dashDirection, transform.forward) > 0.95f)
+            if (Vector3.Dot(pc.dashDirection, transform.forward) > 0.95f)
             {
                 SetFOV(fov + dashFovDif);
             }
-            else if(Vector3.Dot(pc.dashDirection, transform.forward) < 0.95f)
+            else if (Vector3.Dot(pc.dashDirection, transform.forward) < 0.95f)
             {
                 SetFOV(fov - dashFovDif);
             }
@@ -69,7 +62,7 @@ public class CameraController : MonoSingleton<CameraController>
         look *= sensitivity / 100;
         pc.rb.MoveRotation(pc.rb.rotation * Quaternion.Euler(0f, look.x, 0f));
         lookRotation += -look.y;
-        lookRotation = Math.Clamp(lookRotation, -90f, 90f);
+        lookRotation = Math.Clamp(lookRotation, -89.5f, 89.5f);
         transform.eulerAngles
             = new Vector3(
                 lookRotation,
@@ -89,5 +82,10 @@ public class CameraController : MonoSingleton<CameraController>
     private void CurrentFov(float value)
     {
         currentFov = value;
+    }
+
+    public void ShowSpeedLines()
+    {
+
     }
 }

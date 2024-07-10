@@ -25,22 +25,28 @@ public class PlayerController : MonoSingleton<PlayerController>
     private Vector3 currentVelocityHorizontal;
     private bool externalForcesApplied;
     private int health = 100;
+    private CapsuleCollider col;
 
     [Header("Audio Settings")]
     [SerializeField] private AudioSource aud;
     [SerializeField] private AudioClip[] stepSounds;
     [SerializeField] private AudioClip[] jumpSounds;
+    [SerializeField] private AudioClip dashSound;
     public bool dead;
     private UIController uic;
+    [SerializeField] private float dashLength = 1f;
+    private CooldownManager cm;
 
 
     private void Start()
     {
+        col = GetComponent<CapsuleCollider>();
         aud = GetComponent<AudioSource>();
         gc = GetComponentInChildren<GroundCheck>();
         rb = GetComponent<Rigidbody>();
         im = MonoSingleton<InputManager>.Instance;
         uic = MonoSingleton<UIController>.Instance;
+        cm = CooldownManager.Instance;
 
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
@@ -85,6 +91,8 @@ public class PlayerController : MonoSingleton<PlayerController>
         im.EnableInput();
         uic.UpdateHealth(health);
         uic.HideDeathScreen();
+        cm.ResetAllCharges();
+        cm.ResetAllCooldowns();
 
         MonoSingleton<CameraController>.Instance.ResetCamera();
         MonoSingleton<GoreZone>.Instance.ResetGore();
@@ -140,16 +148,18 @@ public class PlayerController : MonoSingleton<PlayerController>
     private void PlayStepSounds()
     {
         if (aud.isPlaying) return;
-        aud.volume = 0.2f;
-        aud.clip = stepSounds[UnityEngine.Random.Range(0, stepSounds.Length)];
-        aud.Play();
+        aud.pitch = 1f;
+        // aud.volume = 0.2f;
+        var clip = stepSounds[UnityEngine.Random.Range(0, stepSounds.Length)];
+        aud.PlayOneShot(clip, 0.2f);
     }
-    
+
     private void PlayJumpSound()
     {
-        aud.volume = 0.7f;
-        aud.clip = jumpSounds[UnityEngine.Random.Range(0, jumpSounds.Length)];
-        aud.Play();
+        // im stopping it to prevent the dash sound from being too loud
+        aud.pitch = 1f;
+        var clip = jumpSounds[UnityEngine.Random.Range(0, jumpSounds.Length)];
+        aud.PlayOneShot(clip, 0.7f);
     }
 
     public void Jump()
@@ -172,5 +182,95 @@ public class PlayerController : MonoSingleton<PlayerController>
     private void NotJumping()
     {
         jumping = false;
+    }
+
+    public void AirFreeze()
+    {
+        // if (!CooldownManager.Instance.CheckCooldown("airFreeze")) return;
+        // CooldownManager.Instance.AddCooldown("airFreeze", 0.1f);
+        if (movementState != MovementState.FALLING) return;
+        rb.velocity = Vector3.zero;
+        rb.AddForce(Vector3.up * 2f, ForceMode.Impulse);
+    }
+
+    public void Dash()
+    {
+        if (CooldownManager.Instance.dashCharges < 1) return;
+
+        Debug.Log("Dash charges: " + CooldownManager.Instance.dashCharges);
+        var camTransform = CameraController.Instance.transform;
+        var camDirection = camTransform.forward;
+        camDirection.Normalize();
+
+        // TODO: fix this so it doesn't require locking vertical camera at 89.5 degrees max to work
+        var direction = movementDirectionNormalized == Vector3.zero ? camDirection : Vector3.ProjectOnPlane(movementDirectionNormalized, Camera.main.transform.up).normalized;
+
+        var targetPosition = transform.position + direction * dashLength;
+        RaycastHit hit;
+
+        // check with 3 rays from head, center and feet
+        var raycastOrigins = new Vector3[3];
+        raycastOrigins[0] = transform.position;
+        // var colHeight = col.height / 2f;
+        var colHeight = 0.5f;
+        Debug.Log(colHeight);
+        raycastOrigins[1] = transform.position + Vector3.up * colHeight;
+        raycastOrigins[2] = transform.position + Vector3.down * colHeight;
+
+        int layerMask = 1 << LayerMask.NameToLayer("Ground");
+
+
+        bool hitSomething = false;
+        var distance = dashLength;
+        foreach (var origin in raycastOrigins)
+        {
+            if (Physics.Raycast(origin, direction, out hit, dashLength, layerMask))
+            {
+                hitSomething = true;
+                if (hit.distance < distance) distance = hit.distance;
+            }
+        }
+
+        if (distance < 0.4f) return;
+
+        if (hitSomething)
+        {
+            targetPosition = transform.position + direction * distance;
+            targetPosition -= direction * 0.33f;
+        }
+
+        // move the player to the target position very quickly but smoothly
+        StartCoroutine(BlinkToPosition(targetPosition, 0.05f));
+    }
+
+    private IEnumerator BlinkToPosition(Vector3 targetPosition, float f)
+    {
+        aud.pitch = 0.5f + 0.25f / (int)CooldownManager.Instance.dashCharges;
+        aud.PlayOneShot(dashSound, 0.15f);
+        CooldownManager.Instance.dashCharges--;
+        rb.velocity = Vector3.zero;
+        rb.useGravity = false;
+        col.enabled = false;
+        dashing = true;
+
+        var initialHeight = col.height;
+        var initialCenter = col.center;
+        col.height = 1f;
+        col.center = new Vector3(0, 0.5f, 0);
+
+        var startPosition = transform.position;
+        var t = 0f;
+        while (t < 1)
+        {
+            t += Time.deltaTime / f;
+            transform.position = Vector3.LerpUnclamped(startPosition, targetPosition, t);
+            yield return null;
+        }
+
+        col.height = initialHeight;
+        col.center = initialCenter;
+        rb.useGravity = true;
+        col.enabled = true;
+        dashing = false;
     }
 }

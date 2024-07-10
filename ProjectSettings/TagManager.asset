@@ -10,6 +10,7 @@ TagManager:
   - Limb
   - Enemy
   - SpawnPoint
+  - Projectile
   layers:
   - Default
   - TransparentFX
@@ -20,7 +21,7 @@ TagManager:
   - Weapon
   - Player
   - GroundCheck
-  - 
+  - Projectile
   - 
   - 
   - Enemy

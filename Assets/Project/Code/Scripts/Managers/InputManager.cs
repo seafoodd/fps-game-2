@@ -22,6 +22,15 @@ public class InputManager : MonoSingleton<InputManager>
         EnableInput();
     }
 
+    // TODO: replace this with a proper pause menu and new input system
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+    }
+
     public void OnMove(InputAction.CallbackContext context)
     {
         if (inputDisabled) return;
@@ -35,7 +44,7 @@ public class InputManager : MonoSingleton<InputManager>
 
         if (context.started)
         {
-            Debug.Log("Dash");
+            pc.Dash();
             // TODO: Implement dash
         }
     }
@@ -89,7 +98,7 @@ public class InputManager : MonoSingleton<InputManager>
 
         if (context.started)
         {
-            wc.SwitchWeapon(0);
+            wc.SwitchWeaponIndex(0);
         }
     }
 
@@ -99,7 +108,7 @@ public class InputManager : MonoSingleton<InputManager>
 
         if (context.started)
         {
-            wc.SwitchWeapon(1);
+            wc.SwitchWeaponIndex(1);
         }
     }
 
@@ -109,7 +118,7 @@ public class InputManager : MonoSingleton<InputManager>
 
         if (context.started)
         {
-            wc.SwitchWeapon(2);
+            wc.SwitchWeaponIndex(2);
         }
     }
 
@@ -119,7 +128,7 @@ public class InputManager : MonoSingleton<InputManager>
 
         if (context.started)
         {
-            wc.SwitchWeapon(3);
+            wc.SwitchWeaponIndex(3);
         }
     }
 
@@ -129,7 +138,7 @@ public class InputManager : MonoSingleton<InputManager>
 
         if (context.started)
         {
-            wc.SwitchWeapon(4);
+            wc.SwitchWeaponIndex(4);
         }
     }
 
@@ -139,7 +148,7 @@ public class InputManager : MonoSingleton<InputManager>
 
         if (context.started)
         {
-            wc.SwitchWeapon(5);
+            wc.SwitchWeaponIndex(5);
         }
     }
 
@@ -148,6 +157,22 @@ public class InputManager : MonoSingleton<InputManager>
         if (inputDisabled) return;
 
         cc.look = context.ReadValue<Vector2>();
+    }
+
+    public void OnDeflect(InputAction.CallbackContext context)
+    {
+        if (inputDisabled) return;
+
+        if (context.started && !wc.isDeflecting)
+        {
+            wc.Deflect();
+        }
+
+        if (context.canceled && wc.isDeflecting)
+        {
+            wc.Deflect();
+        }
+
     }
 
     public void EnableInput()

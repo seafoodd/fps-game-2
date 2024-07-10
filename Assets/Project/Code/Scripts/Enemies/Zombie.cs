@@ -194,7 +194,7 @@ public class Zombie : Damageable
         // shoot the player 10 times
         for (int i = 0; i < 10; i++)
         {
-            InstantiateProjectile(shootPoint.position, MonoSingleton<PlayerController>.Instance.transform.position, 5, 50, 100);
+            InstantiateProjectile(shootPoint.position, MonoSingleton<PlayerController>.Instance.transform.position, 4, 35, 100);
             aud.pitch = Random.Range(0.8f, 1f);
             aud.PlayOneShot(shootSounds[Random.Range(0, shootSounds.Length)]);
             yield return new WaitForSeconds(0.08f);

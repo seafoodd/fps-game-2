@@ -143,6 +143,15 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Deflect"",
+                    ""type"": ""Button"",
+                    ""id"": ""91c55a9f-c277-49ee-8e9f-1b3b6dc3419e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -295,7 +304,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""path"": ""<Keyboard>/1"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""Weapon 1"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -306,7 +315,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""path"": ""<Keyboard>/2"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""Weapon 2"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -317,7 +326,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""path"": ""<Keyboard>/3"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""Weapon 3"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -328,7 +337,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""path"": ""<Keyboard>/4"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""Weapon 4"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -339,7 +348,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""path"": ""<Keyboard>/5"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""Weapon 5"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
@@ -350,8 +359,19 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                     ""path"": ""<Keyboard>/6"",
                     ""interactions"": """",
                     ""processors"": """",
-                    ""groups"": """",
+                    ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""Weapon 6"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""112c5fdf-39b6-4b45-913f-6e4da0a4aede"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Deflect"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -403,6 +423,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         m_Player_Weapon4 = m_Player.FindAction("Weapon 4", throwIfNotFound: true);
         m_Player_Weapon5 = m_Player.FindAction("Weapon 5", throwIfNotFound: true);
         m_Player_Weapon6 = m_Player.FindAction("Weapon 6", throwIfNotFound: true);
+        m_Player_Deflect = m_Player.FindAction("Deflect", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -477,6 +498,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Weapon4;
     private readonly InputAction m_Player_Weapon5;
     private readonly InputAction m_Player_Weapon6;
+    private readonly InputAction m_Player_Deflect;
     public struct PlayerActions
     {
         private @Controls m_Wrapper;
@@ -494,6 +516,7 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         public InputAction @Weapon4 => m_Wrapper.m_Player_Weapon4;
         public InputAction @Weapon5 => m_Wrapper.m_Player_Weapon5;
         public InputAction @Weapon6 => m_Wrapper.m_Player_Weapon6;
+        public InputAction @Deflect => m_Wrapper.m_Player_Deflect;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -542,6 +565,9 @@ public partial class @Controls: IInputActionCollection2, IDisposable
             @Weapon6.started += instance.OnWeapon6;
             @Weapon6.performed += instance.OnWeapon6;
             @Weapon6.canceled += instance.OnWeapon6;
+            @Deflect.started += instance.OnDeflect;
+            @Deflect.performed += instance.OnDeflect;
+            @Deflect.canceled += instance.OnDeflect;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -585,6 +611,9 @@ public partial class @Controls: IInputActionCollection2, IDisposable
             @Weapon6.started -= instance.OnWeapon6;
             @Weapon6.performed -= instance.OnWeapon6;
             @Weapon6.canceled -= instance.OnWeapon6;
+            @Deflect.started -= instance.OnDeflect;
+            @Deflect.performed -= instance.OnDeflect;
+            @Deflect.canceled -= instance.OnDeflect;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -635,5 +664,6 @@ public partial class @Controls: IInputActionCollection2, IDisposable
         void OnWeapon4(InputAction.CallbackContext context);
         void OnWeapon5(InputAction.CallbackContext context);
         void OnWeapon6(InputAction.CallbackContext context);
+        void OnDeflect(InputAction.CallbackContext context);
     }
 }
