@@ -137,6 +137,8 @@ public class Zombie : Damageable
         // StartCoroutine(PlayDeathAnimation());
 
         StopAllCoroutines();
+
+        transform.parent = MonoSingleton<GoreZone>.Instance.goreZone;
     }
 
     private void Update()

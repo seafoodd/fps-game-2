@@ -63,11 +63,15 @@ public class WeaponController : MonoSingleton<WeaponController>
 
     public void PrimaryFire()
     {
+        if (isDeflecting) return;
+        // TODO: maybe make it switch to katana if trying to deflect
         weapons[currentWeaponIndex].GetComponent<WeaponIdentifier>().PrimaryFire();
     }
 
     public void SecondaryFire()
     {
+        if (isDeflecting) return;
+        // TODO: maybe make it switch to katana if trying to deflect
         weapons[currentWeaponIndex].GetComponent<WeaponIdentifier>().SecondaryFire();
     }
 

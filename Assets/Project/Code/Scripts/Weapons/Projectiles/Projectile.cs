@@ -12,6 +12,11 @@ public class Projectile : MonoBehaviour
     public Vector3 direction;
 
 
+    private void Start()
+    {
+        transform.parent = MonoSingleton<GoreZone>.Instance.goreZone;
+    }
+
     private void Update()
     {
         if (Physics.Raycast(transform.position, direction, out RaycastHit hit, speed * Time.deltaTime))

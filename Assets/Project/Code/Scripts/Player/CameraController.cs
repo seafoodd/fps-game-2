@@ -29,6 +29,7 @@ public class CameraController : MonoSingleton<CameraController>
     {
         RotateCamera();
         DashFov();
+        LeanCameraTowardsPlayerMovement(pc.moveInput);
     }
 
     private void DashFov()
@@ -50,11 +51,24 @@ public class CameraController : MonoSingleton<CameraController>
         }
     }
 
+    public void LeanCameraTowardsPlayerMovement(Vector2 moveInput)
+    {
+        if (moveInput != Vector2.zero && !pc.gc.touchingGround)
+        {
+            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, -moveInput.x * 3.5f), 0.1f);
+        }
+        else
+        {
+            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, 0f), 0.1f);
+        }
+    }
+
     public void ResetCamera()
     {
         look = Vector2.zero;
         lookRotation = 0f;
         transform.eulerAngles = new Vector3(0f,0f, 0f);
+        transform.DOKill(this);
     }
 
     private void RotateCamera()
@@ -63,11 +77,11 @@ public class CameraController : MonoSingleton<CameraController>
         pc.rb.MoveRotation(pc.rb.rotation * Quaternion.Euler(0f, look.x, 0f));
         lookRotation += -look.y;
         lookRotation = Math.Clamp(lookRotation, -89.5f, 89.5f);
-        transform.eulerAngles
+        transform.localEulerAngles
             = new Vector3(
                 lookRotation,
-                transform.eulerAngles.y,
-                transform.eulerAngles.z
+                0f,
+                transform.localEulerAngles.z
             );
     }
 

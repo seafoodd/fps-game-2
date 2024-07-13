@@ -99,7 +99,7 @@ public class Katana : MonoBehaviour
         if (other.gameObject.layer != LayerMask.NameToLayer("Limb")) return;
         Transform hitEnemy = other.transform;
 
-        while (hitEnemy.parent != null && hitEnemy.parent.gameObject.name != "Enemies")
+        while (hitEnemy.parent != null && hitEnemy.parent.gameObject.name != "Gore" && hitEnemy.parent.gameObject.name != "Enemies")
         {
             hitEnemy = hitEnemy.parent;
         }

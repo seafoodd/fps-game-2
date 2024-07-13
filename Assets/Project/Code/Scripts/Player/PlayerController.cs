@@ -18,7 +18,7 @@ public class PlayerController : MonoSingleton<PlayerController>
     [HideInInspector] public Vector3 dashDirection;
     private bool isGrounded;
     public Vector2 moveInput;
-    private GroundCheck gc;
+    public GroundCheck gc;
     private bool jumping;
     private Vector3 movementDirectionNormalized;
     private Vector3 targetVelocity;
@@ -26,6 +26,7 @@ public class PlayerController : MonoSingleton<PlayerController>
     private bool externalForcesApplied;
     private int health = 100;
     private CapsuleCollider col;
+    private bool isWallRunning;
 
     [Header("Audio Settings")]
     [SerializeField] private AudioSource aud;
@@ -36,6 +37,8 @@ public class PlayerController : MonoSingleton<PlayerController>
     private UIController uic;
     [SerializeField] private float dashLength = 1f;
     private CooldownManager cm;
+    private WallCheck wac;
+    private Vector3 wallRunDirection;
 
 
     private void Start()
@@ -47,6 +50,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         im = MonoSingleton<InputManager>.Instance;
         uic = MonoSingleton<UIController>.Instance;
         cm = CooldownManager.Instance;
+        wac = MonoSingleton<WallCheck>.Instance;
 
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
@@ -63,7 +67,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         health -= damage;
         uic.UpdateHealth(health);
 
-        Debug.Log("Damage taken: " + damage + ", health remaining: " + health);
+        // Debug.Log("Damage taken: " + damage + ", health remaining: " + health);
         if (health <= 0)
         {
             Die();
@@ -118,8 +122,6 @@ public class PlayerController : MonoSingleton<PlayerController>
 
         currentVelocityHorizontal = Vector3.ProjectOnPlane(rb.velocity, transform.up);
 
-        rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
-            movementSmoothing);
         if (moveInput.x == 0f && moveInput.y == 0f && gc.touchingGround)
         {
             if (!jumping && !dashing && !externalForcesApplied)
@@ -129,6 +131,44 @@ public class PlayerController : MonoSingleton<PlayerController>
 
             rb.useGravity = false;
             movementState = MovementState.IDLE;
+        }
+        else if (Input.GetButton("Jump") && wac.touchingWall && !gc.touchingGround && !jumping && !dashing && !externalForcesApplied)
+        {
+            rb.useGravity = false;
+            rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+            // set target velocity to wall run speed even if movementDirectionNormalized is not set
+            // Get the normal of the wall
+            Vector3 wallNormal = wac.hitInfo.normal;
+
+            // Vector3 cameraRight = Camera.main.transform.right;
+            Vector3 cameraRight = transform.right;
+            // Debug.Log(Vector3.Dot(Camera.main.transform.forward, wallNormal));
+            // Debug.Log(moveInput);
+
+            if (Vector3.Dot(Camera.main.transform.forward, wallNormal) < 0)
+            {
+                // cameraRight *= -1;
+                wallNormal *= -1;
+                // Debug.Log("flipped");
+            }
+
+            // Calculate the direction to move in for wall running
+            // Vector3 wallRunDirection = Vector3.Cross(wallNormal, cameraRight);
+            // Vector3 wallRunDirection = wallNormal;
+            // Vector3 wallRunDirection = Vector3.ProjectOnPlane(movementDirectionNormalized, wallNormal);
+            wallRunDirection = wallNormal;
+            wallRunDirection.y = 0;
+            wallRunDirection.Normalize();
+
+            // Set target velocity to wall run speed
+            targetVelocity = wallRunDirection * speed;
+            Debug.Log("Wall run direction: " + wallRunDirection);
+            // Debug.Log("Wall normal: " + wallNormal);
+
+
+
+            movementState = MovementState.WALLRUNNING;
+            PlayStepSounds();
         }
         else
         {
@@ -143,6 +183,22 @@ public class PlayerController : MonoSingleton<PlayerController>
                 movementState = MovementState.FALLING;
             }
         }
+        rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
+            movementSmoothing);
+    }
+
+    // private void WallRun()
+    // {
+    //     if (wac.touchingWall)
+    //     {
+    //         rb.AddForce(Vector3.up * 2f, ForceMode.Impulse);
+    //     }
+    // }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawRay(transform.position, wallRunDirection * 2f);
     }
 
     private void PlayStepSounds()

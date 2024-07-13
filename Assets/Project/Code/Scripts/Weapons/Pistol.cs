@@ -173,7 +173,7 @@ public class Pistol : MonoBehaviour
             {
                 Transform hitEnemy = h.transform;
 
-                while (hitEnemy.parent != null && hitEnemy.parent.gameObject.name != "Enemies")
+                while (hitEnemy.parent != null && hitEnemy.parent.gameObject.name != "Gore" && hitEnemy.parent.gameObject.name != "Enemies")
                 {
                     hitEnemy = hitEnemy.parent;
                 }

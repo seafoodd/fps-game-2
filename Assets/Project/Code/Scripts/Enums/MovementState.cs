@@ -2,5 +2,6 @@ public enum MovementState
 {
     IDLE,
     WALKING,
-    FALLING
+    FALLING,
+    WALLRUNNING
 }

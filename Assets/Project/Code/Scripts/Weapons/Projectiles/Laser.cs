@@ -11,6 +11,7 @@ public class Laser : MonoBehaviour
 
     private void Start()
     {
+        transform.parent = MonoSingleton<GoreZone>.Instance.goreZone;
         initialWidth = lineRenderer.widthMultiplier;
         StartCoroutine(Shrink(lineRenderer, initialWidth, duration));
     }

@@ -16,6 +16,7 @@ public class BloodSplatter : MonoBehaviour
 
     private void Start()
     {
+        transform.parent = MonoSingleton<GoreZone>.Instance.goreZone;
         ps = GetComponent<ParticleSystem>();
         aud = GetComponent<AudioSource>();
         collisionEvents = new List<ParticleCollisionEvent>();
