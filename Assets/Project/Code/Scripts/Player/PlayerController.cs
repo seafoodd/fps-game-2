@@ -38,7 +38,6 @@ public class PlayerController : MonoSingleton<PlayerController>
     [SerializeField] private float dashLength = 1f;
     private CooldownManager cm;
     private WallCheck wac;
-    private Vector3 wallRunDirection;
 
 
     private void Start()
@@ -136,37 +135,14 @@ public class PlayerController : MonoSingleton<PlayerController>
         {
             rb.useGravity = false;
             rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-            // set target velocity to wall run speed even if movementDirectionNormalized is not set
-            // Get the normal of the wall
-            Vector3 wallNormal = wac.hitInfo.normal;
 
-            // Vector3 cameraRight = Camera.main.transform.right;
-            Vector3 cameraRight = transform.right;
-            // Debug.Log(Vector3.Dot(Camera.main.transform.forward, wallNormal));
-            // Debug.Log(moveInput);
+            var lookDir = Camera.main.transform.forward;
+            lookDir.y = 0;
 
-            if (Vector3.Dot(Camera.main.transform.forward, wallNormal) < 0)
-            {
-                // cameraRight *= -1;
-                wallNormal *= -1;
-                // Debug.Log("flipped");
-            }
+            var wallParallel = Vector3.Cross(wac.hitInfo.normal, Vector3.up);
+            var wallRunDir = Vector3.Project(lookDir, wallParallel).normalized;
 
-            // Calculate the direction to move in for wall running
-            // Vector3 wallRunDirection = Vector3.Cross(wallNormal, cameraRight);
-            // Vector3 wallRunDirection = wallNormal;
-            // Vector3 wallRunDirection = Vector3.ProjectOnPlane(movementDirectionNormalized, wallNormal);
-            wallRunDirection = wallNormal;
-            wallRunDirection.y = 0;
-            wallRunDirection.Normalize();
-
-            // Set target velocity to wall run speed
-            targetVelocity = wallRunDirection * speed;
-            Debug.Log("Wall run direction: " + wallRunDirection);
-            // Debug.Log("Wall normal: " + wallNormal);
-
-
-
+            targetVelocity = wallRunDir * speed;
             movementState = MovementState.WALLRUNNING;
             PlayStepSounds();
         }
@@ -197,8 +173,27 @@ public class PlayerController : MonoSingleton<PlayerController>
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawRay(transform.position, wallRunDirection * 2f);
+        // Gizmos.color = Color.red;
+        // Gizmos.DrawRay(transform.position, wallRunDirection * 2);
+        // Gizmos.DrawRay(Camera.main.transform.position, camForward * 2);
+        // Gizmos.DrawRay(transform.position, wallNormal * 2);
+        Gizmos.color = Color.blue;
+        var dir = Camera.main.transform.forward;
+        // dir.x = 0;
+        dir.y = 0;
+        // dir.z = 0;
+        dir.Normalize();
+
+        // dir = Vector3.Cross(dir,  wac.hitInfo.normal);
+
+        var n = wac.hitInfo.normal;
+        n.y = 0;
+        n.Normalize();
+
+        dir = Vector3.Project(dir, n).normalized;
+
+        Gizmos.DrawRay(Camera.main.transform.position, dir * 4);
+        // Gizmos.DrawRay(Camera.main.transform.position, dir * 4);
     }
 
     private void PlayStepSounds()

@@ -1952,8 +1952,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.95, y: 0.95, z: 0.95}
-  m_Center: {x: 0, y: 0.025, z: 0}
+  m_Size: {x: 0.95, y: 0.8, z: 0.95}
+  m_Center: {x: 0, y: -0.21, z: 0}
 --- !u!114 &49642538
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1966,9 +1966,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78ec15e281b0ce44cb858e191ed93604, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onWall: 0
   touchingWall: 0
-  canWallJump: 0
   cols: []
 --- !u!1 &69140132
 GameObject:
