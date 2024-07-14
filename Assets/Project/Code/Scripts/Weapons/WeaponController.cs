@@ -14,9 +14,11 @@ public class WeaponController : MonoSingleton<WeaponController>
     private int previousWeaponIndex;
     [SerializeField] private AudioClip deflectSound;
     [SerializeField] private AudioSource aud;
+    private InputManager im;
 
     private void Start()
     {
+       im = MonoSingleton<InputManager>.Instance;
        pc = MonoSingleton<PlayerController>.Instance;
         // get all children of the weapon controller as weapons
         weapons = new GameObject[transform.childCount];
@@ -75,34 +77,41 @@ public class WeaponController : MonoSingleton<WeaponController>
         weapons[currentWeaponIndex].GetComponent<WeaponIdentifier>().SecondaryFire();
     }
 
+    // public void Deflect()
+    // {
+    //     if (im.deflectPressed)
+    //     {
+    //         StopAllCoroutines();
+    //         if (!isDeflecting && CooldownManager.Instance.CheckCooldown("Deflect"))
+    //         {
+    //             StartCoroutine(DeflectCoroutine());
+    //         }
+    //         return;
+    //     }
+    //
+    //     if (isDeflecting)
+    //     {
+    //         StopAllCoroutines();
+    //         StartCoroutine(StopDeflectCoroutine());
+    //     }
+    // }
+
     public void Deflect()
     {
-        StopAllCoroutines();
-        if (!CooldownManager.Instance.CheckCooldown("Deflect")) return;
-        StartCoroutine(DeflectCoroutine());
+        isDeflecting = true;
+        previousWeaponIndex = currentWeaponIndex;
+        SwitchWeaponName("Deflect");
+        weapons[currentWeaponIndex].GetComponent<Animator>().Play("Deflect");
+
+        Invoke(nameof(StopDeflect), 3f);
     }
 
-    private IEnumerator DeflectCoroutine()
+    public void StopDeflect()
     {
-        isDeflecting = !isDeflecting;
-
-        if (isDeflecting)
-        {
-            previousWeaponIndex = currentWeaponIndex;
-            fullDeflect = true;
-            SwitchWeaponName("Deflect");
-            weapons[currentWeaponIndex].GetComponent<Animator>().Play("Deflect");
-
-            yield return new WaitForSeconds(0.5f);
-
-            fullDeflect = false;
-        }
-        else if (!isDeflecting)
-        {
-            fullDeflect = false;
-            SwitchWeaponIndex(previousWeaponIndex);
-            CooldownManager.Instance.AddCooldown("Deflect", 0.5f);
-        }
+        isDeflecting = false;
+        // fullDeflect = false;
+        SwitchWeaponIndex(previousWeaponIndex);
+        CooldownManager.Instance.AddCooldown("Deflect", 0.5f);
     }
 
     private void OnTriggerEnter(Collider other)

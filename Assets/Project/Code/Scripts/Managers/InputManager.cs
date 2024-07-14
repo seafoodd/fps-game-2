@@ -9,6 +9,14 @@ public class InputManager : MonoSingleton<InputManager>
     private WeaponController wc;
     private Vector2 moveInput;
     [SerializeField] private bool inputDisabled;
+    private Controls playerControls;
+
+    public bool jumpPressed;
+
+    private void Awake()
+    {
+        playerControls = new Controls();
+    }
 
     private void Start()
     {
@@ -19,7 +27,14 @@ public class InputManager : MonoSingleton<InputManager>
 
     private void OnEnable()
     {
+        playerControls.Enable();
         EnableInput();
+    }
+
+    private void OnDisable()
+    {
+        playerControls.Disable();
+        DisableInput();
     }
 
     // TODO: replace this with a proper pause menu and new input system
@@ -28,6 +43,27 @@ public class InputManager : MonoSingleton<InputManager>
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             Application.Quit();
+        }
+
+        if (playerControls.Player.PrimaryFire.ReadValue<float>() > 0.5f) wc.PrimaryFire();
+        if (playerControls.Player.Jump.ReadValue<float>() > 0.5f) pc.Jump();
+
+        jumpPressed = playerControls.Player.Jump.ReadValue<float>() > 0.5f;
+
+        DeflectInput();
+    }
+
+    private void DeflectInput()
+    {
+        var deflectPressed = playerControls.Player.Deflect.ReadValue<float>() > 0.5f;
+
+        if (deflectPressed && !wc.isDeflecting && CooldownManager.Instance.CheckCooldown("Deflect"))
+        {
+            wc.Deflect();
+        }
+        if (!deflectPressed && wc.isDeflecting)
+        {
+            wc.StopDeflect();
         }
     }
 
@@ -49,25 +85,27 @@ public class InputManager : MonoSingleton<InputManager>
         }
     }
 
-    public void OnJump(InputAction.CallbackContext context)
-    {
-        if (inputDisabled) return;
+    // public void OnJump(InputAction.CallbackContext context)
+    // {
+    //     if (inputDisabled) return;
+    //
+    //         if (context.started)
+    //         {
+    //             pc.Jump();
+    //         }
+    // }
 
-            if (context.started)
-            {
-                pc.Jump();
-            }
-    }
-
-    public void OnPrimaryFire(InputAction.CallbackContext context)
-    {
-        if (inputDisabled) return;
-
-        if (context.started)
-        {
-            wc.PrimaryFire();
-        }
-    }
+    // public void OnPrimaryFire(InputAction.CallbackContext context)
+    // {
+    //     if (inputDisabled) return;
+    //
+    //     bool isButtonHeld = context.ReadValue<float>() > 0.1f;
+    //
+    //     if (isButtonHeld)
+    //     {
+    //         wc.PrimaryFire();
+    //     }
+    // }
 
     public void OnSecondaryFire(InputAction.CallbackContext context)
     {
@@ -159,21 +197,21 @@ public class InputManager : MonoSingleton<InputManager>
         cc.look = context.ReadValue<Vector2>();
     }
 
-    public void OnDeflect(InputAction.CallbackContext context)
-    {
-        if (inputDisabled) return;
-
-        if (context.started && !wc.isDeflecting)
-        {
-            wc.Deflect();
-        }
-
-        if (context.canceled && wc.isDeflecting)
-        {
-            wc.Deflect();
-        }
-
-    }
+    // public void OnDeflect(InputAction.CallbackContext context)
+    // {
+    //     if (inputDisabled) return;
+    //
+    //     if (context.started && !wc.isDeflecting)
+    //     {
+    //         wc.Deflect();
+    //     }
+    //
+    //     if (context.canceled && wc.isDeflecting)
+    //     {
+    //         wc.Deflect();
+    //     }
+    //
+    // }
 
     public void EnableInput()
     {

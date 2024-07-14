@@ -38,6 +38,10 @@ public class PlayerController : MonoSingleton<PlayerController>
     [SerializeField] private float dashLength = 1f;
     private CooldownManager cm;
     private WallCheck wac;
+    private bool canWallRun = true;
+    private float wallRunningSeconds;
+    private Vector3 wallRunDir;
+    private Vector3 wallRunDirNew;
 
 
     private void Start()
@@ -130,21 +134,12 @@ public class PlayerController : MonoSingleton<PlayerController>
 
             rb.useGravity = false;
             movementState = MovementState.IDLE;
+            rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
+                movementSmoothing);
         }
-        else if (Input.GetButton("Jump") && wac.touchingWall && !gc.touchingGround && !jumping && !dashing && !externalForcesApplied)
+        else if (canWallRun && im.jumpPressed && wac.touchingWall && !gc.touchingGround && !jumping && !dashing && !externalForcesApplied)
         {
-            rb.useGravity = false;
-            rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-
-            var lookDir = Camera.main.transform.forward;
-            lookDir.y = 0;
-
-            var wallParallel = Vector3.Cross(wac.hitInfo.normal, Vector3.up);
-            var wallRunDir = Vector3.Project(lookDir, wallParallel).normalized;
-
-            targetVelocity = wallRunDir * speed;
-            movementState = MovementState.WALLRUNNING;
-            PlayStepSounds();
+            WallRun();
         }
         else
         {
@@ -153,14 +148,53 @@ public class PlayerController : MonoSingleton<PlayerController>
             {
                 PlayStepSounds();
                 movementState = MovementState.WALKING;
+                rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
+                movementSmoothing);
             }
             else
             {
                 movementState = MovementState.FALLING;
+                rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
+                movementSmoothing/5f);
             }
         }
-        rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
+    }
+
+    private void WallRun()
+    {
+        if (wallRunningSeconds > 2f)
+        {
+            canWallRun = false;
+            wallRunningSeconds = 0f;
+            Invoke("ResetWallRun", 2f);
+            return;
+        }
+
+        rb.useGravity = false;
+        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
+        var lookDir = Camera.main.transform.forward;
+        // lookDir.y = 0;
+
+        var wallParallel = Vector3.Cross(wac.hitInfo.normal, Vector3.up);
+        wallRunDir = Vector3.Project(lookDir, wallParallel).normalized;
+        wallRunDirNew = Vector3.ProjectOnPlane(lookDir, wac.hitInfo.normal).normalized;
+
+        // targetVelocity = wallRunDir * (speed + wallRunningSeconds * 2f);
+        targetVelocity = wallRunDirNew * (speed * 1.25f + wallRunningSeconds * 1.5f);
+
+        movementState = MovementState.WALLRUNNING;
+        PlayStepSounds();
+
+        wallRunningSeconds += Time.deltaTime;
+
+        rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, targetVelocity.y, targetVelocity.z),
             movementSmoothing);
+    }
+
+    private void ResetWallRun()
+    {
+        canWallRun = true;
     }
 
     // private void WallRun()
@@ -173,26 +207,26 @@ public class PlayerController : MonoSingleton<PlayerController>
 
     private void OnDrawGizmos()
     {
-        // Gizmos.color = Color.red;
+        Gizmos.color = Color.blue;
         // Gizmos.DrawRay(transform.position, wallRunDirection * 2);
         // Gizmos.DrawRay(Camera.main.transform.position, camForward * 2);
         // Gizmos.DrawRay(transform.position, wallNormal * 2);
-        Gizmos.color = Color.blue;
-        var dir = Camera.main.transform.forward;
-        // dir.x = 0;
-        dir.y = 0;
-        // dir.z = 0;
-        dir.Normalize();
-
-        // dir = Vector3.Cross(dir,  wac.hitInfo.normal);
-
-        var n = wac.hitInfo.normal;
-        n.y = 0;
-        n.Normalize();
-
-        dir = Vector3.Project(dir, n).normalized;
-
-        Gizmos.DrawRay(Camera.main.transform.position, dir * 4);
+        // Gizmos.color = Color.blue;
+        // var dir = Camera.main.transform.forward;
+        // // dir.x = 0;
+        // dir.y = 0;
+        // // dir.z = 0;
+        // dir.Normalize();
+        //
+        // // dir = Vector3.Cross(dir,  wac.hitInfo.normal);
+        //
+        // var n = wac.hitInfo.normal;
+        // n.y = 0;
+        // n.Normalize();
+        //
+        // dir = Vector3.Project(dir, n).normalized;
+        //
+        Gizmos.DrawRay(transform.position, wallRunDirNew * 4);
         // Gizmos.DrawRay(Camera.main.transform.position, dir * 4);
     }
 

@@ -267,6 +267,17 @@ public partial class @Controls: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""1bed895f-4e13-43d7-8ae6-810175105826"",
+                    ""path"": ""<Mouse>/scroll/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""8a985205-12f0-4692-86f9-b7f70dff7ba9"",
                     ""path"": ""<Pointer>/delta"",
                     ""interactions"": """",
