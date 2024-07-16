@@ -85,15 +85,15 @@ public class InputManager : MonoSingleton<InputManager>
         }
     }
 
-    // public void OnJump(InputAction.CallbackContext context)
-    // {
-    //     if (inputDisabled) return;
-    //
-    //         if (context.started)
-    //         {
-    //             pc.Jump();
-    //         }
-    // }
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        if (inputDisabled) return;
+
+            if (context.started)
+            {
+                pc.WallJump();
+            }
+    }
 
     // public void OnPrimaryFire(InputAction.CallbackContext context)
     // {

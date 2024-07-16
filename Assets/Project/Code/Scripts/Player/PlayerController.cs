@@ -144,7 +144,7 @@ public class PlayerController : MonoSingleton<PlayerController>
             rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
                 movementSmoothing);
         }
-        else if (cm.CheckCooldown("wallRun") && im.jumpPressed && wac.touchingWall && !gc.touchingGround && !jumping &&
+        else if (cm.CheckCooldown("wallRun") /*&& im.jumpPressed */&& wac.touchingWall && !gc.touchingGround && !jumping &&
                  !dashing && !externalForcesApplied)
         {
             WallRun();
@@ -216,8 +216,9 @@ public class PlayerController : MonoSingleton<PlayerController>
             movementSmoothing);
     }
 
-    private void WallJump()
+    public void WallJump()
     {
+        if(movementState != MovementState.WALLRUNNING) return;
         rb.useGravity = true;
         // rb.velocity = Vector3.zero;
         rb.AddForce(wac.hitInfo.normal * 5f, ForceMode.Impulse);
@@ -225,6 +226,7 @@ public class PlayerController : MonoSingleton<PlayerController>
 
         aud.pitch = 1f;
         aud.PlayOneShot(jumpSounds[0], 0.7f);
+        SetMovementState(MovementState.FALLING);
     }
 
     private void SetMovementState(MovementState state)
@@ -234,9 +236,9 @@ public class PlayerController : MonoSingleton<PlayerController>
 
         if (previousState == MovementState.WALLRUNNING && state == MovementState.FALLING)
         {
-            WallJump();
+            // WallJump();
             wallRunningSeconds = 0f;
-            cm.AddCooldown("wallRun", 1f);
+            cm.AddCooldown("wallRun", 0.5f);
         }
 
         if (previousState == MovementState.FALLING)
