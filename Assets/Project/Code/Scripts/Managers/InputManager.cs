@@ -13,7 +13,7 @@ public class InputManager : MonoSingleton<InputManager>
 
     public bool jumpPressed;
 
-    private void Awake()
+    private new void Awake()
     {
         playerControls = new Controls();
     }
@@ -34,7 +34,6 @@ public class InputManager : MonoSingleton<InputManager>
     private void OnDisable()
     {
         playerControls.Disable();
-        DisableInput();
     }
 
     // TODO: replace this with a proper pause menu and new input system
