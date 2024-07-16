@@ -106,6 +106,9 @@ public class PlayerController : MonoSingleton<PlayerController>
         cm.ResetAllCooldowns();
         wac.ResetWallCheck();
         gc.ResetGroundCheck();
+        fallTime = 0f;
+        airTime = 0f;
+        wallRunningSeconds = 0f;
 
         MonoSingleton<CameraController>.Instance.ResetCamera();
         MonoSingleton<GoreZone>.Instance.ResetGore();

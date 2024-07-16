@@ -24,15 +24,16 @@ public class TimeManager : MonoSingleton<TimeManager>
         Time.timeScale = 1;
     }
 
-    public void SlowMotion(float timeScale, float duration)
+    public void SlowMotion(float timeScale, float duration, bool changePitch = false, float pitch = 0.5f)
     {
         // StopAllCoroutines();
-        StartCoroutine(SlowMotionCoroutine(timeScale, duration));
+        StartCoroutine(SlowMotionCoroutine(timeScale, duration, changePitch, pitch));
     }
 
-    private IEnumerator SlowMotionCoroutine(float timeScale, float duration)
+    private IEnumerator SlowMotionCoroutine(float timeScale, float duration, bool changePitch = false, float pitch = 0.5f)
     {
         Time.timeScale = timeScale;
+        if(changePitch) MonoSingleton<AudioManager>.Instance.ChangePitchForSeconds(pitch, duration);
         yield return new WaitForSecondsRealtime(duration);
         Time.timeScale = 1;
     }
