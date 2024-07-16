@@ -104,4 +104,10 @@ public class WallCheck : MonoSingleton<WallCheck>
     {
         return col.gameObject.layer == LayerMask.NameToLayer("Ground");
     }
+
+    public void ResetWallCheck()
+    {
+        touchingWall = false;
+        cols.Clear();
+    }
 }

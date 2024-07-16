@@ -51,7 +51,7 @@ public class Katana : MonoBehaviour
 
     private IEnumerator SlashAttack()
     {
-        cm.AddCooldown("Katana", 0.2f);
+        cm.AddCooldown("Katana", 0.21f);
         attackCollider.enabled = true;
         hitSomething = false;
         string currentAnimation = "";

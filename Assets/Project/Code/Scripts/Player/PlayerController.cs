@@ -9,8 +9,9 @@ public class PlayerController : MonoSingleton<PlayerController>
     public Rigidbody rb;
     private InputManager im;
 
-    [Header("Movement Settings")]
-    [SerializeField] private float speed = 10.0f;
+    [Header("Movement Settings")] [SerializeField]
+    private float speed = 10.0f;
+
     [SerializeField] private float jumpForce;
     [SerializeField] private float movementSmoothing;
     public MovementState movementState;
@@ -28,8 +29,9 @@ public class PlayerController : MonoSingleton<PlayerController>
     private CapsuleCollider col;
     private bool isWallRunning;
 
-    [Header("Audio Settings")]
-    [SerializeField] private AudioSource aud;
+    [Header("Audio Settings")] [SerializeField]
+    private AudioSource aud;
+
     [SerializeField] private AudioClip[] stepSounds;
     [SerializeField] private AudioClip[] jumpSounds;
     [SerializeField] private AudioClip dashSound;
@@ -38,10 +40,12 @@ public class PlayerController : MonoSingleton<PlayerController>
     [SerializeField] private float dashLength = 1f;
     private CooldownManager cm;
     private WallCheck wac;
-    private bool canWallRun = true;
     private float wallRunningSeconds;
     private Vector3 wallRunDir;
     private Vector3 wallRunDirNew;
+    private Vector3 movementDirection;
+    public float airTime;
+    public float fallTime;
 
 
     private void Start()
@@ -100,6 +104,8 @@ public class PlayerController : MonoSingleton<PlayerController>
         uic.HideDeathScreen();
         cm.ResetAllCharges();
         cm.ResetAllCooldowns();
+        wac.ResetWallCheck();
+        gc.ResetGroundCheck();
 
         MonoSingleton<CameraController>.Instance.ResetCamera();
         MonoSingleton<GoreZone>.Instance.ResetGore();
@@ -119,8 +125,9 @@ public class PlayerController : MonoSingleton<PlayerController>
 
     private void Move()
     {
-        movementDirectionNormalized = new Vector3(moveInput.x, 0, moveInput.y).normalized;
-        movementDirectionNormalized = transform.TransformDirection(movementDirectionNormalized);
+        movementDirection = new Vector3(moveInput.x, 0, moveInput.y);
+        movementDirection = transform.TransformDirection(movementDirection);
+        movementDirectionNormalized = movementDirection.normalized;
         targetVelocity = movementDirectionNormalized * speed;
 
         currentVelocityHorizontal = Vector3.ProjectOnPlane(rb.velocity, transform.up);
@@ -133,11 +140,12 @@ public class PlayerController : MonoSingleton<PlayerController>
             }
 
             rb.useGravity = false;
-            movementState = MovementState.IDLE;
+            SetMovementState(MovementState.IDLE);
             rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
                 movementSmoothing);
         }
-        else if (canWallRun && im.jumpPressed && wac.touchingWall && !gc.touchingGround && !jumping && !dashing && !externalForcesApplied)
+        else if (cm.CheckCooldown("wallRun") && im.jumpPressed && wac.touchingWall && !gc.touchingGround && !jumping &&
+                 !dashing && !externalForcesApplied)
         {
             WallRun();
         }
@@ -147,29 +155,45 @@ public class PlayerController : MonoSingleton<PlayerController>
             if (gc.touchingGround && !jumping && !dashing && !externalForcesApplied)
             {
                 PlayStepSounds();
-                movementState = MovementState.WALKING;
+                SetMovementState(MovementState.WALKING);
                 rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
-                movementSmoothing);
+                    movementSmoothing);
             }
             else
             {
-                movementState = MovementState.FALLING;
-                rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
-                movementSmoothing/5f);
+                SetMovementState(MovementState.FALLING);
+                // rb.velocity = Vector3.Lerp(rb.velocity,
+                //     new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
+                //     movementSmoothing / 10f);
+
+
+                if (rb.velocity == Vector3.zero) return;
+                var airControl = (1 / rb.velocity.magnitude) * 25f;
+                bool isSlowingDown = Vector3.Dot(rb.velocity, targetVelocity) < 0;
+
+                if (targetVelocity.magnitude > 0f)
+                {
+                        rb.AddForce(movementDirection * speed * airControl * (isSlowingDown ? 3f : 1f));
+                }
+
+                // falling
+                Debug.Log(rb.velocity.y);
+
+                airTime += Time.deltaTime;
+                if (rb.velocity.y < 0)
+                {
+                    fallTime += Time.deltaTime;
+                    rb.AddForce(Vector3.down * fallTime * 4f);
+                    return;
+                }
+
+                fallTime = 0f;
             }
         }
     }
 
     private void WallRun()
     {
-        if (wallRunningSeconds > 2f)
-        {
-            canWallRun = false;
-            wallRunningSeconds = 0f;
-            Invoke("ResetWallRun", 2f);
-            return;
-        }
-
         rb.useGravity = false;
         rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
 
@@ -183,18 +207,45 @@ public class PlayerController : MonoSingleton<PlayerController>
         // targetVelocity = wallRunDir * (speed + wallRunningSeconds * 2f);
         targetVelocity = wallRunDirNew * (speed * 1.25f + wallRunningSeconds * 1.5f);
 
-        movementState = MovementState.WALLRUNNING;
+        SetMovementState(MovementState.WALLRUNNING);
         PlayStepSounds();
 
-        wallRunningSeconds += Time.deltaTime;
+        if (wallRunningSeconds < 3f) wallRunningSeconds += Time.deltaTime;
 
         rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, targetVelocity.y, targetVelocity.z),
             movementSmoothing);
     }
 
-    private void ResetWallRun()
+    private void WallJump()
     {
-        canWallRun = true;
+        rb.useGravity = true;
+        // rb.velocity = Vector3.zero;
+        rb.AddForce(wac.hitInfo.normal * 5f, ForceMode.Impulse);
+        rb.AddForce(Vector3.up * 5f, ForceMode.Impulse);
+
+        aud.pitch = 1f;
+        aud.PlayOneShot(jumpSounds[0], 0.7f);
+    }
+
+    private void SetMovementState(MovementState state)
+    {
+        var previousState = movementState;
+        if (previousState == state) return;
+
+        if (previousState == MovementState.WALLRUNNING && state == MovementState.FALLING)
+        {
+            WallJump();
+            wallRunningSeconds = 0f;
+            cm.AddCooldown("wallRun", 1f);
+        }
+
+        if (previousState == MovementState.FALLING)
+        {
+            airTime = 0f;
+            fallTime = 0f;
+        }
+
+        movementState = state;
     }
 
     // private void WallRun()
@@ -253,6 +304,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         {
             return;
         }
+
         jumping = true;
         Invoke("NotJumping", 0.25f);
         var velocity = rb.velocity;
@@ -261,7 +313,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         PlayJumpSound();
 
-        movementState = MovementState.FALLING;
+        SetMovementState(MovementState.FALLING);
     }
 
     private void NotJumping()
@@ -288,7 +340,9 @@ public class PlayerController : MonoSingleton<PlayerController>
         camDirection.Normalize();
 
         // TODO: fix this so it doesn't require locking vertical camera at 89.5 degrees max to work
-        var direction = movementDirectionNormalized == Vector3.zero ? camDirection : Vector3.ProjectOnPlane(movementDirectionNormalized, Camera.main.transform.up).normalized;
+        var direction = movementDirectionNormalized == Vector3.zero
+            ? camDirection
+            : Vector3.ProjectOnPlane(movementDirectionNormalized, Camera.main.transform.up).normalized;
 
         var targetPosition = transform.position + direction * dashLength;
         RaycastHit hit;
@@ -333,6 +387,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         aud.pitch = 0.5f + 0.25f / (int)CooldownManager.Instance.dashCharges;
         aud.PlayOneShot(dashSound, 0.15f);
         CooldownManager.Instance.dashCharges--;
+        var initialVelocity = rb.velocity;
         rb.velocity = Vector3.zero;
         rb.useGravity = false;
         col.enabled = false;
@@ -354,6 +409,7 @@ public class PlayerController : MonoSingleton<PlayerController>
 
         col.height = initialHeight;
         col.center = initialCenter;
+        rb.velocity = initialVelocity;
         rb.useGravity = true;
         col.enabled = true;
         dashing = false;

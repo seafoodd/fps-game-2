@@ -120,7 +120,8 @@ public class WeaponController : MonoSingleton<WeaponController>
         {
             if (other.gameObject.CompareTag("Projectile"))
             {
-                TimeManager.Instance.FreezeTime(0.05f);
+                // TimeManager.Instance.FreezeTime(0.05f);
+                TimeManager.Instance.SlowMotion(0.05f, 0.05f);
                 aud.pitch = UnityEngine.Random.Range(0.75f, 1f);
                 aud.PlayOneShot(deflectSound);
 

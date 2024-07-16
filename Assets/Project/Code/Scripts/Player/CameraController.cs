@@ -53,13 +53,15 @@ public class CameraController : MonoSingleton<CameraController>
 
     public void LeanCameraTowardsPlayerMovement(Vector2 moveInput)
     {
-        if (moveInput != Vector2.zero && !pc.gc.touchingGround)
+        if (moveInput != Vector2.zero/* && !pc.gc.touchingGround*/)
         {
-            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, -moveInput.x * 3.5f), 0.1f);
+            var multiplier = 1f;
+            if (!pc.gc.touchingGround) multiplier *= 2f;
+            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, -moveInput.x * 2f * multiplier), 0.2f);
         }
         else
         {
-            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, 0f), 0.1f);
+            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, 0f), 0.2f);
         }
     }
 

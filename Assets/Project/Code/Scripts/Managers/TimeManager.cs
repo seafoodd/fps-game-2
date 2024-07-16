@@ -26,6 +26,7 @@ public class TimeManager : MonoSingleton<TimeManager>
 
     public void SlowMotion(float timeScale, float duration)
     {
+        // StopAllCoroutines();
         StartCoroutine(SlowMotionCoroutine(timeScale, duration));
     }
 

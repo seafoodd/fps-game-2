@@ -92,4 +92,11 @@ public class GroundCheck : MonoBehaviour
         return !other.isTrigger && !other.gameObject.CompareTag("Slippery") &&
                (other.gameObject.layer == LayerMask.NameToLayer("Ground") || other.gameObject.layer == LayerMask.NameToLayer("Default"));
     }
+
+    public void ResetGroundCheck()
+    {
+        touchingGround = false;
+        cols.Clear();
+        canJump = false;
+    }
 }

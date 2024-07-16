@@ -61,9 +61,13 @@ public class CooldownManager : MonoSingleton<CooldownManager>
 
     public void ResetCooldown(string key)
     {
+        // if (cooldowns.ContainsKey(key))
+        // {
+        //     cooldowns[key] = 0;
+        // }
         if (cooldowns.ContainsKey(key))
         {
-            cooldowns[key] = 0;
+            cooldowns.Remove(key);
         }
     }
 
