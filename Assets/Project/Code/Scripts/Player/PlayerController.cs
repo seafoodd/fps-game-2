@@ -46,6 +46,7 @@ public class PlayerController : MonoSingleton<PlayerController>
     private Vector3 movementDirection;
     public float airTime;
     public float fallTime;
+    private CameraController cc;
 
 
     private void Start()
@@ -58,6 +59,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         uic = MonoSingleton<UIController>.Instance;
         cm = CooldownManager.Instance;
         wac = MonoSingleton<WallCheck>.Instance;
+        cc = MonoSingleton<CameraController>.Instance;
 
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
@@ -110,7 +112,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         airTime = 0f;
         wallRunningSeconds = 0f;
 
-        MonoSingleton<CameraController>.Instance.ResetCamera();
+        cc.ResetCamera();
         MonoSingleton<GoreZone>.Instance.ResetGore();
     }
 
@@ -147,7 +149,7 @@ public class PlayerController : MonoSingleton<PlayerController>
             rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
                 movementSmoothing);
         }
-        else if (cm.CheckCooldown("wallRun") /*&& im.jumpPressed */&& wac.touchingWall && !gc.touchingGround && !jumping &&
+        else if (moveInput.y != 0f && cm.CheckCooldown("wallRun") /*&& im.jumpPressed */&& wac.touchingWall && !gc.touchingGround && !jumping &&
                  !dashing && !externalForcesApplied)
         {
             WallRun();
@@ -170,29 +172,51 @@ public class PlayerController : MonoSingleton<PlayerController>
                 //     movementSmoothing / 10f);
 
 
+                var momentum = rb.velocity.magnitude / 5f;
+                momentum = Mathf.Clamp(momentum, 1f, 5f);
+
                 if (rb.velocity == Vector3.zero) return;
-                var airControl = (1 / rb.velocity.magnitude) * 25f;
-                bool isSlowingDown = Vector3.Dot(rb.velocity, targetVelocity) < 0;
+                var airControl = currentVelocityHorizontal.magnitude * 10f;
+                airControl = Mathf.Clamp(airControl, 1f, 20f);
+                bool isSlowingDown = Vector3.Dot(currentVelocityHorizontal, targetVelocity) < 0;
+
+
+                targetVelocity += targetVelocity * momentum;
+                if (targetVelocity.magnitude < 20f) rb.AddForce(movementDirection * 5f, ForceMode.Force);
+                // if (targetVelocity.magnitude < currentVelocityHorizontal.magnitude)
+                //     targetVelocity += targetVelocity * momentum;
+
+                Debug.Log(currentVelocityHorizontal.magnitude + " " + momentum + " " + targetVelocity.magnitude);
+                targetVelocity = Vector3.ClampMagnitude(targetVelocity, 20f);
 
                 if (targetVelocity.magnitude > 0f)
                 {
-                        rb.AddForce(movementDirection * speed * airControl * (isSlowingDown ? 3f : 1f));
+                    Vector3 force = movementDirection * 12f;
+                    Vector3.ClampMagnitude(force, 20f);
+                    // Debug.Log(currentVelocityHorizontal.magnitude + " " + airControl);
+                    rb.AddForce(force);
+                    rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
+                        movementSmoothing / airControl * (isSlowingDown ? 3f : 1f));
                 }
 
                 // falling
-                Debug.Log(rb.velocity.y);
+                // Debug.Log(rb.velocity.y);
 
                 airTime += Time.deltaTime;
                 if (rb.velocity.y < 0)
                 {
                     fallTime += Time.deltaTime;
                     rb.AddForce(Vector3.down * fallTime * 4f);
+                    // Debug.Log("fallTime " + fallTime + " " + rb.velocity.y);
                     return;
                 }
 
                 fallTime = 0f;
             }
         }
+
+        // set max speed
+        Vector3.ClampMagnitude(rb.velocity,  25f);
     }
 
     private void WallRun()
@@ -205,15 +229,38 @@ public class PlayerController : MonoSingleton<PlayerController>
 
         var wallParallel = Vector3.Cross(wac.hitInfo.normal, Vector3.up);
         wallRunDir = Vector3.Project(lookDir, wallParallel).normalized;
-        wallRunDirNew = Vector3.ProjectOnPlane(lookDir, wac.hitInfo.normal).normalized;
+        wallRunDirNew = Vector3.ProjectOnPlane(lookDir, wac.hitInfo.normal);
 
-        // targetVelocity = wallRunDir * (speed + wallRunningSeconds * 2f);
-        targetVelocity = wallRunDirNew * (speed * 1.25f + wallRunningSeconds * 1.5f);
+        // backwards wallrun
+        wallRunDirNew *= moveInput.y;
 
-        SetMovementState(MovementState.WALLRUNNING);
-        PlayStepSounds();
+        // only run up the wall
+        if (wallRunDirNew.y < 0) wallRunDirNew.y = 0;
+
+
+        wallRunDirNew.Normalize();
+
+
+        // bool left = Vector3.Dot(wallRunDirNew, wallParallel) > 0;
+        // Debug.Log(left);
+        // var dir = Vector3.Project(wallRunDirNew, wac.hitInfo.normal).normalized;
+        // cc.LeanCameraTowardsDirection(dir, 15f);
 
         if (wallRunningSeconds < 3f) wallRunningSeconds += Time.deltaTime;
+        SetMovementState(MovementState.WALLRUNNING);
+        PlayStepSounds();
+        targetVelocity = wallRunDirNew * (speed * 1.25f + wallRunningSeconds * 1.5f);
+
+        var leanAngle = 8f * Vector3.Dot(wallRunDirNew, wallParallel);
+
+        // var leanAngle = 8f * Vector3.Dot(lookDir, wallRunDirNew) * moveInput.y;
+        if (Vector3.Dot(lookDir, wallRunDirNew) < 0.4f)
+        {
+            // leanAngle *= Vector3.Dot(lookDir, wallRunDirNew);
+            targetVelocity *= 0.6f;
+        }
+        leanAngle *= Vector3.Dot(lookDir, wallRunDirNew);
+        cc.LeanCameraByAngle(leanAngle);
 
         rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, targetVelocity.y, targetVelocity.z),
             movementSmoothing);
@@ -237,9 +284,19 @@ public class PlayerController : MonoSingleton<PlayerController>
         var previousState = movementState;
         if (previousState == state) return;
 
+        // if (state == MovementState.WALLRUNNING)
+        // {
+        //     // var angle = Vector3.Angle(wac.hitInfo.normal, Vector3.up);
+        //     var angle = 3f;
+        //
+        //
+        //     cc.LeanCameraTowardsDirection(wac.hitInfo.normal, angle);
+        // }
+
         if (previousState == MovementState.WALLRUNNING && state == MovementState.FALLING)
         {
             // WallJump();
+            cc.ResetLean();
             wallRunningSeconds = 0f;
             cm.AddCooldown("wallRun", 0.5f);
         }
@@ -305,7 +362,7 @@ public class PlayerController : MonoSingleton<PlayerController>
 
     public void Jump()
     {
-        if (!gc.touchingGround || jumping)
+        if (!gc.touchingGround || jumping || movementState == MovementState.WALLRUNNING)
         {
             return;
         }
@@ -331,7 +388,10 @@ public class PlayerController : MonoSingleton<PlayerController>
         // if (!CooldownManager.Instance.CheckCooldown("airFreeze")) return;
         // CooldownManager.Instance.AddCooldown("airFreeze", 0.1f);
         if (movementState != MovementState.FALLING) return;
-        rb.velocity = Vector3.zero;
+
+        // rb.velocity = Vector3.zero;
+        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
         rb.AddForce(Vector3.up * 2f, ForceMode.Impulse);
     }
 
@@ -339,7 +399,7 @@ public class PlayerController : MonoSingleton<PlayerController>
     {
         if (CooldownManager.Instance.dashCharges < 1) return;
 
-        Debug.Log("Dash charges: " + CooldownManager.Instance.dashCharges);
+        // Debug.Log("Dash charges: " + CooldownManager.Instance.dashCharges);
         var camTransform = CameraController.Instance.transform;
         var camDirection = camTransform.forward;
         camDirection.Normalize();
@@ -357,7 +417,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         raycastOrigins[0] = transform.position;
         // var colHeight = col.height / 2f;
         var colHeight = 0.5f;
-        Debug.Log(colHeight);
+        // Debug.Log(colHeight);
         raycastOrigins[1] = transform.position + Vector3.up * colHeight;
         raycastOrigins[2] = transform.position + Vector3.down * colHeight;
 
@@ -392,8 +452,10 @@ public class PlayerController : MonoSingleton<PlayerController>
         aud.pitch = 0.5f + 0.25f / (int)CooldownManager.Instance.dashCharges;
         aud.PlayOneShot(dashSound, 0.15f);
         CooldownManager.Instance.dashCharges--;
-        var initialVelocity = rb.velocity;
+        // var initialVelocity = rb.velocity;
+        // initialVelocity.y = 0f;
         rb.velocity = Vector3.zero;
+        fallTime = 0f;
         rb.useGravity = false;
         col.enabled = false;
         dashing = true;
@@ -414,7 +476,8 @@ public class PlayerController : MonoSingleton<PlayerController>
 
         col.height = initialHeight;
         col.center = initialCenter;
-        rb.velocity = initialVelocity;
+        rb.velocity = Vector3.zero;
+        // rb.velocity = Vector3.Project(initialVelocity, targetPosition - startPosition);
         rb.useGravity = true;
         col.enabled = true;
         dashing = false;

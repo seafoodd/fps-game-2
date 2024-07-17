@@ -29,7 +29,7 @@ public class CameraController : MonoSingleton<CameraController>
     {
         RotateCamera();
         DashFov();
-        LeanCameraTowardsPlayerMovement(pc.moveInput);
+        if(pc.movementState != MovementState.WALLRUNNING) LeanCameraTowardsPlayerMovement(pc.moveInput);
     }
 
     private void DashFov()
@@ -53,16 +53,26 @@ public class CameraController : MonoSingleton<CameraController>
 
     public void LeanCameraTowardsPlayerMovement(Vector2 moveInput)
     {
-        if (moveInput != Vector2.zero/* && !pc.gc.touchingGround*/)
-        {
+        // if (moveInput != Vector2.zero/* && !pc.gc.touchingGround*/)
+        // {
             var multiplier = 1f;
             if (!pc.gc.touchingGround) multiplier *= 2f;
-            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, -moveInput.x * 2f * multiplier), 0.2f);
-        }
-        else
-        {
-            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, 0f), 0.2f);
-        }
+            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, -moveInput.x * 1.5f * multiplier), 0.2f);
+        // }
+        // else if (transform.localEulerAngles.z > 0f)
+        // {
+        //     ResetLean();
+        // }
+    }
+
+    public void LeanCameraByAngle(float angle)
+    {
+        transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, -angle), 0.2f);
+    }
+
+    public void ResetLean()
+    {
+        transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, 0f), 0.2f);
     }
 
     public void ResetCamera()
@@ -79,7 +89,10 @@ public class CameraController : MonoSingleton<CameraController>
         pc.rb.MoveRotation(pc.rb.rotation * Quaternion.Euler(0f, look.x, 0f));
         lookRotation += -look.y;
         lookRotation = Math.Clamp(lookRotation, -89.5f, 89.5f);
-        transform.localEulerAngles
+
+        var cameraObj = transform.GetChild(0);
+
+        cameraObj.transform.localEulerAngles
             = new Vector3(
                 lookRotation,
                 0f,

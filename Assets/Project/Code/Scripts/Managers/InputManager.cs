@@ -39,6 +39,8 @@ public class InputManager : MonoSingleton<InputManager>
     // TODO: replace this with a proper pause menu and new input system
     private void Update()
     {
+        if (inputDisabled) return;
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             Application.Quit();

@@ -37,7 +37,7 @@ public class Pistol : MonoBehaviour
     }
 
     // TODO: Add a reload animation
-    private IEnumerator PlayReloadAnimation(float recoilDuration = 0.1f, float returnDuration = 0.4f, float angle = 45f)
+    private IEnumerator PlayReloadAnimation(float recoilDuration = 0.1f, float returnDuration = 0.35f, float angle = 45f)
     {
         // Increase the rotation amount for a more noticeable change
         Vector3 rotationAmount = new Vector3(-angle, 0, 0);

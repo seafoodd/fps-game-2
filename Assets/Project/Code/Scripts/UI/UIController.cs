@@ -23,7 +23,11 @@ public class UIController : MonoSingleton<UIController>
         {
             if (i+1 <= charges)
             {
-                if (dashCharges[i].enabled) continue;
+                if (dashCharges[i].enabled)
+                {
+                    dashCharges[i].color = dashChargeColor;
+                    continue;
+                }
                 dashCharges[i].color = Color.clear;
                 dashCharges[i].enabled = true;
                 StartCoroutine(FadeIn(dashCharges[i], 0.2f));

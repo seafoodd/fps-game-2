@@ -39,7 +39,7 @@ public class WeaponController : MonoSingleton<WeaponController>
         // if (isDeflecting) return;
         if (isDeflecting)
         {
-            StopAllCoroutines();
+            CancelInvoke(nameof(StopDeflect));
             isDeflecting = false;
             fullDeflect = false;
         }
@@ -108,7 +108,7 @@ public class WeaponController : MonoSingleton<WeaponController>
 
     public void StopDeflect()
     {
-        isDeflecting = false;
+        // isDeflecting = false;
         // fullDeflect = false;
         SwitchWeaponIndex(previousWeaponIndex);
         CooldownManager.Instance.AddCooldown("Deflect", 0.5f);
