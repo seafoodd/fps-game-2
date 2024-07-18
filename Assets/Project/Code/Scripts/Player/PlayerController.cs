@@ -374,13 +374,14 @@ public class PlayerController : MonoSingleton<PlayerController>
         if (CooldownManager.Instance.dashCharges < 1) return;
 
         var camTransform = CameraController.Instance.transform;
-        var camDirection = camTransform.forward;
-        camDirection.Normalize();
+        // var camDirection = camTransform.forward;
+        // camDirection.Normalize();
 
         // TODO: fix this so it doesn't require locking vertical camera at 89.5 degrees max to work
-        var direction = movementDirectionNormalized == Vector3.zero
-            ? camDirection
-            : Vector3.ProjectOnPlane(movementDirectionNormalized, Camera.main.transform.up).normalized;
+        var direction = Vector3
+            .ProjectOnPlane(
+                movementDirectionNormalized == Vector3.zero ? transform.forward : movementDirectionNormalized,
+                Camera.main.transform.up).normalized;
 
         var targetPosition = transform.position + direction * dashLength;
         RaycastHit hit;
@@ -444,8 +445,7 @@ public class PlayerController : MonoSingleton<PlayerController>
 
         col.height = initialHeight;
         col.center = initialCenter;
-        rb.velocity = Vector3.zero;
-        rb.velocity = Vector3.Project(initialVelocity, targetPosition - startPosition);
+        rb.velocity = (targetPosition - startPosition).normalized * 10f;
         rb.useGravity = true;
         col.enabled = true;
         dashing = false;
