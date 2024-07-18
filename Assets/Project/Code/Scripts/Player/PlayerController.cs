@@ -1,10 +1,10 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoSingleton<PlayerController>
 {
     public Rigidbody rb;
-    private InputManager im;
 
     [Header("Movement Settings")] [SerializeField]
     private float speed = 10.0f;
@@ -14,17 +14,8 @@ public class PlayerController : MonoSingleton<PlayerController>
     public MovementState movementState;
     [HideInInspector] public bool dashing;
     [HideInInspector] public Vector3 dashDirection;
-    private bool isGrounded;
     public Vector2 moveInput;
     public GroundCheck gc;
-    private bool jumping;
-    private Vector3 movementDirectionNormalized;
-    private Vector3 targetVelocity;
-    private Vector3 currentVelocityHorizontal;
-    private bool externalForcesApplied;
-    private int health = 100;
-    private CapsuleCollider col;
-    private bool isWallRunning;
 
     [Header("Audio Settings")] [SerializeField]
     private AudioSource aud;
@@ -33,16 +24,26 @@ public class PlayerController : MonoSingleton<PlayerController>
     [SerializeField] private AudioClip[] jumpSounds;
     [SerializeField] private AudioClip dashSound;
     public bool dead;
-    private UIController uic;
     [SerializeField] private float dashLength = 1f;
-    private CooldownManager cm;
-    private WallCheck wac;
-    private float wallRunningSeconds;
-    private Vector3 wallRunDirNew;
-    private Vector3 movementDirection;
     public float airTime;
     public float fallTime;
     private CameraController cc;
+    private CooldownManager cm;
+    private CapsuleCollider col;
+    private Vector3 currentVelocityHorizontal;
+    private bool externalForcesApplied;
+    private int health = 100;
+    private InputManager im;
+    private bool isGrounded;
+    private bool isWallRunning;
+    private bool jumping;
+    private Vector3 movementDirection;
+    private Vector3 movementDirectionNormalized;
+    private Vector3 targetVelocity;
+    private UIController uic;
+    private WallCheck wac;
+    private Vector3 wallRunDirNew;
+    private float wallRunningSeconds;
 
 
     private void Start()
@@ -57,7 +58,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         wac = MonoSingleton<WallCheck>.Instance;
         cc = MonoSingleton<CameraController>.Instance;
 
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void FixedUpdate()
@@ -67,18 +68,48 @@ public class PlayerController : MonoSingleton<PlayerController>
         Move();
     }
 
+    // private void WallRun()
+    // {
+    //     if (wac.touchingWall)
+    //     {
+    //         rb.AddForce(Vector3.up * 2f, ForceMode.Impulse);
+    //     }
+    // }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.blue;
+        // Gizmos.DrawRay(transform.position, wallRunDirection * 2);
+        // Gizmos.DrawRay(Camera.main.transform.position, camForward * 2);
+        // Gizmos.DrawRay(transform.position, wallNormal * 2);
+        // Gizmos.color = Color.blue;
+        // var dir = Camera.main.transform.forward;
+        // // dir.x = 0;
+        // dir.y = 0;
+        // // dir.z = 0;
+        // dir.Normalize();
+        //
+        // // dir = Vector3.Cross(dir,  wac.hitInfo.normal);
+        //
+        // var n = wac.hitInfo.normal;
+        // n.y = 0;
+        // n.Normalize();
+        //
+        // dir = Vector3.Project(dir, n).normalized;
+        //
+        Gizmos.DrawRay(transform.position, wallRunDirNew * 4);
+        // Gizmos.DrawRay(Camera.main.transform.position, dir * 4);
+    }
+
     public void GetHit(int damage)
     {
         health -= damage;
         uic.UpdateHealth(health);
 
-        if (health <= 0)
-        {
-            Die();
-        }
+        if (health <= 0) Die();
     }
 
-    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         var spawnPoint = GameObject.FindWithTag("SpawnPoint");
         StartCoroutine(Respawn(spawnPoint == null ? null : spawnPoint.transform));
@@ -89,6 +120,7 @@ public class PlayerController : MonoSingleton<PlayerController>
     {
         yield return new WaitForEndOfFrame();
 
+        StopAllCoroutines();
         health = 100;
         dead = false;
         rb.freezeRotation = true;
@@ -135,16 +167,15 @@ public class PlayerController : MonoSingleton<PlayerController>
         if (moveInput.x == 0f && moveInput.y == 0f && gc.touchingGround)
         {
             if (!jumping && !dashing && !externalForcesApplied)
-            {
                 rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-            }
 
             rb.useGravity = false;
             SetMovementState(MovementState.IDLE);
             rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
                 movementSmoothing);
         }
-        else if (moveInput.y != 0f && cm.CheckCooldown("wallRun") && wac.touchingWall && !gc.touchingGround && !jumping &&
+        else if (moveInput.y != 0f && cm.CheckCooldown("wallRun") && wac.touchingWall && !gc.touchingGround &&
+                 !jumping &&
                  !dashing && !externalForcesApplied)
         {
             WallRun();
@@ -169,7 +200,7 @@ public class PlayerController : MonoSingleton<PlayerController>
                 if (rb.velocity == Vector3.zero) return;
                 var airControl = currentVelocityHorizontal.magnitude * 10f;
                 airControl = Mathf.Clamp(airControl, 1f, 20f);
-                bool isSlowingDown = Vector3.Dot(currentVelocityHorizontal, targetVelocity) < 0;
+                var isSlowingDown = Vector3.Dot(currentVelocityHorizontal, targetVelocity) < 0;
 
 
                 targetVelocity += targetVelocity * momentum;
@@ -182,11 +213,12 @@ public class PlayerController : MonoSingleton<PlayerController>
 
                 if (targetVelocity.magnitude > 0f)
                 {
-                    Vector3 force = movementDirection * 12f;
+                    var force = movementDirection * 12f;
                     Vector3.ClampMagnitude(force, 20f);
                     // Debug.Log(currentVelocityHorizontal.magnitude + " " + airControl);
                     rb.AddForce(force);
-                    rb.velocity = Vector3.Lerp(rb.velocity, new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
+                    rb.velocity = Vector3.Lerp(rb.velocity,
+                        new Vector3(targetVelocity.x, rb.velocity.y, targetVelocity.z),
                         movementSmoothing / airControl * (isSlowingDown ? 3f : 1f));
                 }
 
@@ -207,7 +239,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         }
 
         // set max speed
-        Vector3.ClampMagnitude(rb.velocity,  25f);
+        Vector3.ClampMagnitude(rb.velocity, 25f);
     }
 
     private void WallRun()
@@ -236,17 +268,11 @@ public class PlayerController : MonoSingleton<PlayerController>
         targetVelocity = wallRunDirNew * (speed * 1.25f + wallRunningSeconds * 1.5f);
 
         // make climbing faster
-        if(wallRunDirNew.y > 0.5f)
-        {
-            targetVelocity += Vector3.up * 10f;
-        }
+        if (wallRunDirNew.y > 0.5f) targetVelocity += Vector3.up * 10f;
 
         var leanAngle = 8f * Vector3.Dot(wallRunDirNew, wallParallel);
 
-        if (Vector3.Dot(lookDir, wallRunDirNew) < 0.4f)
-        {
-            targetVelocity *= 0.6f;
-        }
+        if (Vector3.Dot(lookDir, wallRunDirNew) < 0.4f) targetVelocity *= 0.6f;
         leanAngle *= Vector3.Dot(lookDir, wallRunDirNew);
         cc.LeanCameraByAngle(leanAngle);
 
@@ -256,7 +282,7 @@ public class PlayerController : MonoSingleton<PlayerController>
 
     public void WallJump()
     {
-        if(movementState != MovementState.WALLRUNNING) return;
+        if (movementState != MovementState.WALLRUNNING) return;
         rb.useGravity = true;
         rb.AddForce(wac.hitInfo.normal * 5f, ForceMode.Impulse);
         rb.AddForce(Vector3.up * 5f, ForceMode.Impulse);
@@ -297,39 +323,6 @@ public class PlayerController : MonoSingleton<PlayerController>
         movementState = state;
     }
 
-    // private void WallRun()
-    // {
-    //     if (wac.touchingWall)
-    //     {
-    //         rb.AddForce(Vector3.up * 2f, ForceMode.Impulse);
-    //     }
-    // }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.blue;
-        // Gizmos.DrawRay(transform.position, wallRunDirection * 2);
-        // Gizmos.DrawRay(Camera.main.transform.position, camForward * 2);
-        // Gizmos.DrawRay(transform.position, wallNormal * 2);
-        // Gizmos.color = Color.blue;
-        // var dir = Camera.main.transform.forward;
-        // // dir.x = 0;
-        // dir.y = 0;
-        // // dir.z = 0;
-        // dir.Normalize();
-        //
-        // // dir = Vector3.Cross(dir,  wac.hitInfo.normal);
-        //
-        // var n = wac.hitInfo.normal;
-        // n.y = 0;
-        // n.Normalize();
-        //
-        // dir = Vector3.Project(dir, n).normalized;
-        //
-        Gizmos.DrawRay(transform.position, wallRunDirNew * 4);
-        // Gizmos.DrawRay(Camera.main.transform.position, dir * 4);
-    }
-
     private void PlayStepSounds()
     {
         if (aud.isPlaying) return;
@@ -348,10 +341,7 @@ public class PlayerController : MonoSingleton<PlayerController>
 
     public void Jump()
     {
-        if (!gc.touchingGround || jumping || movementState == MovementState.WALLRUNNING)
-        {
-            return;
-        }
+        if (!gc.touchingGround || jumping || movementState == MovementState.WALLRUNNING) return;
 
         jumping = true;
         Invoke(nameof(NotJumping), 0.25f);
@@ -402,19 +392,17 @@ public class PlayerController : MonoSingleton<PlayerController>
         raycastOrigins[1] = transform.position + Vector3.up * colHeight;
         raycastOrigins[2] = transform.position + Vector3.down * colHeight;
 
-        int layerMask = 1 << LayerMask.NameToLayer("Ground");
+        var layerMask = 1 << LayerMask.NameToLayer("Ground");
 
 
-        bool hitSomething = false;
+        var hitSomething = false;
         var distance = dashLength;
         foreach (var origin in raycastOrigins)
-        {
             if (Physics.Raycast(origin, direction, out hit, dashLength, layerMask))
             {
                 hitSomething = true;
                 if (hit.distance < distance) distance = hit.distance;
             }
-        }
 
         if (distance < 0.4f) return;
 
@@ -433,7 +421,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         aud.pitch = 0.5f + 0.25f / (int)CooldownManager.Instance.dashCharges;
         aud.PlayOneShot(dashSound, 0.15f);
         CooldownManager.Instance.dashCharges--;
-        var initialVelocity =currentVelocityHorizontal;
+        var initialVelocity = currentVelocityHorizontal;
         rb.velocity = Vector3.zero;
         fallTime = 0f;
         rb.useGravity = false;

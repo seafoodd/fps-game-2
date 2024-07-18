@@ -1,15 +1,12 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    private bool isDeflected;
     public int damage;
     public float bulletForce;
     public float speed;
     public Vector3 direction;
+    private bool isDeflected;
 
 
     private void Start()
@@ -19,11 +16,9 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
-        if (Physics.Raycast(transform.position, direction, out RaycastHit hit, speed * Time.deltaTime))
-        {
-            // If the ray hits something, handle the collision
+        if (Physics.Raycast(transform.position, direction, out var hit, speed * Time.deltaTime))
             HandleCollision(hit.collider);
-        }
+
         Move();
     }
 
@@ -34,13 +29,10 @@ public class Projectile : MonoBehaviour
 
     private void HandleCollision(Collider other)
     {
-        if(other.gameObject.layer == LayerMask.NameToLayer("Ground"))
-        {
-            // Debug.Log("Hit ground");
+        if (other.gameObject.layer == LayerMask.NameToLayer("Ground"))
             Destroy(gameObject);
-        }
 
-        if(other.gameObject.CompareTag("Player") && !isDeflected)
+        if (other.gameObject.CompareTag("Player") && !isDeflected)
         {
             if (WeaponController.Instance.isDeflecting) return;
             other.gameObject.GetComponent<PlayerController>().GetHit(damage);
@@ -49,21 +41,17 @@ public class Projectile : MonoBehaviour
 
         else if (other.gameObject.CompareTag("Enemy") && isDeflected)
         {
-            Vector3 hitPoint = other.ClosestPointOnBounds(transform.position);
+            var hitPoint = other.ClosestPointOnBounds(transform.position);
             other.gameObject.GetComponent<EnemyIdentifier>().GetHit(gameObject, damage, 0, hitPoint);
             Destroy(gameObject);
         }
-
     }
 
     public void Deflect(Vector3 direction, int damageMultiplier = 2, float speedMultiplier = 1.5f)
     {
-        // GetComponent<TrailRenderer>().enabled = false;
         isDeflected = true;
         this.direction = direction;
         damage *= damageMultiplier;
-        // transform.position = hitPoint;
         speed *= speedMultiplier;
-        // GetComponent<TrailRenderer>().enabled = true;
     }
 }

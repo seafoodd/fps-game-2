@@ -1,11 +1,9 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
 public class AudioManager : MonoSingleton<AudioManager>
 {
-
     [SerializeField] private AudioMixer mixer;
     private AudioMixerGroup effectsMixer;
     private AudioMixerGroup musicMixer;

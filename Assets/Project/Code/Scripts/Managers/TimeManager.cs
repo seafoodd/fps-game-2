@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class TimeManager : MonoSingleton<TimeManager>
@@ -30,10 +29,11 @@ public class TimeManager : MonoSingleton<TimeManager>
         StartCoroutine(SlowMotionCoroutine(timeScale, duration, changePitch, pitch));
     }
 
-    private IEnumerator SlowMotionCoroutine(float timeScale, float duration, bool changePitch = false, float pitch = 0.5f)
+    private IEnumerator SlowMotionCoroutine(float timeScale, float duration, bool changePitch = false,
+        float pitch = 0.5f)
     {
         Time.timeScale = timeScale;
-        if(changePitch) MonoSingleton<AudioManager>.Instance.ChangePitchForSeconds(pitch, duration);
+        if (changePitch) MonoSingleton<AudioManager>.Instance.ChangePitchForSeconds(pitch, duration);
         yield return new WaitForSecondsRealtime(duration);
         Time.timeScale = 1;
     }

@@ -1,17 +1,17 @@
-using System;
-using UnityEngine.InputSystem;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class InputManager : MonoSingleton<InputManager>
 {
-    private PlayerController pc;
-    private CameraController cc;
-    private WeaponController wc;
-    private Vector2 moveInput;
     [SerializeField] private bool inputDisabled;
-    private Controls playerControls;
 
     public bool jumpPressed;
+    private CameraController cc;
+    private Vector2 moveInput;
+    private PlayerController pc;
+    private Controls playerControls;
+    private WeaponController wc;
 
     private new void Awake()
     {
@@ -25,6 +25,21 @@ public class InputManager : MonoSingleton<InputManager>
         wc = MonoSingleton<WeaponController>.Instance;
     }
 
+    // TODO: replace this with a proper pause menu and new input system
+    private void Update()
+    {
+        if (inputDisabled) return;
+
+        if (Input.GetKeyDown(KeyCode.Escape)) Application.Quit();
+
+        if (playerControls.Player.PrimaryFire.ReadValue<float>() > 0.5f) wc.PrimaryFire();
+        if (playerControls.Player.Jump.ReadValue<float>() > 0.5f) pc.Jump();
+
+        jumpPressed = playerControls.Player.Jump.ReadValue<float>() > 0.5f;
+
+        DeflectInput();
+    }
+
     private void OnEnable()
     {
         playerControls.Enable();
@@ -36,36 +51,12 @@ public class InputManager : MonoSingleton<InputManager>
         playerControls.Disable();
     }
 
-    // TODO: replace this with a proper pause menu and new input system
-    private void Update()
-    {
-        if (inputDisabled) return;
-
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            Application.Quit();
-        }
-
-        if (playerControls.Player.PrimaryFire.ReadValue<float>() > 0.5f) wc.PrimaryFire();
-        if (playerControls.Player.Jump.ReadValue<float>() > 0.5f) pc.Jump();
-
-        jumpPressed = playerControls.Player.Jump.ReadValue<float>() > 0.5f;
-
-        DeflectInput();
-    }
-
     private void DeflectInput()
     {
         var deflectPressed = playerControls.Player.Deflect.ReadValue<float>() > 0.5f;
 
-        if (deflectPressed && !wc.isDeflecting && CooldownManager.Instance.CheckCooldown("Deflect"))
-        {
-            wc.Deflect();
-        }
-        if (!deflectPressed && wc.isDeflecting)
-        {
-            wc.StopDeflect();
-        }
+        if (deflectPressed && !wc.isDeflecting && CooldownManager.Instance.CheckCooldown("Deflect")) wc.Deflect();
+        if (!deflectPressed && wc.isDeflecting) wc.StopDeflect();
     }
 
     public void OnMove(InputAction.CallbackContext context)
@@ -79,21 +70,15 @@ public class InputManager : MonoSingleton<InputManager>
     {
         if (inputDisabled) return;
 
-        if (context.started)
-        {
-            pc.Dash();
-            // TODO: Implement dash
-        }
+        if (context.started) pc.Dash();
+        // TODO: Implement dash
     }
 
     public void OnJump(InputAction.CallbackContext context)
     {
         if (inputDisabled) return;
 
-            if (context.started)
-            {
-                pc.WallJump();
-            }
+        if (context.started) pc.WallJump();
     }
 
     // public void OnPrimaryFire(InputAction.CallbackContext context)
@@ -112,22 +97,16 @@ public class InputManager : MonoSingleton<InputManager>
     {
         if (inputDisabled) return;
 
-        if (context.started)
-        {
-            wc.SecondaryFire();
-        }
+        if (context.started) wc.SecondaryFire();
     }
 
     public void OnReload(InputAction.CallbackContext context)
     {
         if (context.started)
-        {
             // TODO: Implement reload (or maybe not because reloading is boring)
-
             // reload scene for now
-            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
-            // StartCoroutine(pc.Respawn());
-        }
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        // StartCoroutine(pc.Respawn());
     }
 
     // switch weapons
@@ -135,60 +114,42 @@ public class InputManager : MonoSingleton<InputManager>
     {
         if (inputDisabled) return;
 
-        if (context.started)
-        {
-            wc.SwitchWeaponIndex(0);
-        }
+        if (context.started) wc.SwitchWeaponIndex(0);
     }
 
     public void OnSwitchWeapon2(InputAction.CallbackContext context)
     {
         if (inputDisabled) return;
 
-        if (context.started)
-        {
-            wc.SwitchWeaponIndex(1);
-        }
+        if (context.started) wc.SwitchWeaponIndex(1);
     }
 
     public void OnSwitchWeapon3(InputAction.CallbackContext context)
     {
         if (inputDisabled) return;
 
-        if (context.started)
-        {
-            wc.SwitchWeaponIndex(2);
-        }
+        if (context.started) wc.SwitchWeaponIndex(2);
     }
 
     public void OnSwitchWeapon4(InputAction.CallbackContext context)
     {
         if (inputDisabled) return;
 
-        if (context.started)
-        {
-            wc.SwitchWeaponIndex(3);
-        }
+        if (context.started) wc.SwitchWeaponIndex(3);
     }
 
     public void OnSwitchWeapon5(InputAction.CallbackContext context)
     {
         if (inputDisabled) return;
 
-        if (context.started)
-        {
-            wc.SwitchWeaponIndex(4);
-        }
+        if (context.started) wc.SwitchWeaponIndex(4);
     }
 
     public void OnSwitchWeapon6(InputAction.CallbackContext context)
     {
         if (inputDisabled) return;
 
-        if (context.started)
-        {
-            wc.SwitchWeaponIndex(5);
-        }
+        if (context.started) wc.SwitchWeaponIndex(5);
     }
 
     public void OnLook(InputAction.CallbackContext context)

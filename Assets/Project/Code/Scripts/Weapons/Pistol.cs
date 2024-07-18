@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Audio;
 using Random = UnityEngine.Random;
 
 public class Pistol : MonoBehaviour
@@ -37,16 +35,17 @@ public class Pistol : MonoBehaviour
     }
 
     // TODO: Add a reload animation
-    private IEnumerator PlayReloadAnimation(float recoilDuration = 0.1f, float returnDuration = 0.35f, float angle = 45f)
+    private IEnumerator PlayReloadAnimation(float recoilDuration = 0.1f, float returnDuration = 0.35f,
+        float angle = 45f)
     {
         // Increase the rotation amount for a more noticeable change
-        Vector3 rotationAmount = new Vector3(-angle, 0, 0);
+        var rotationAmount = new Vector3(-angle, 0, 0);
 
         // Play the recoil animation
-        float elapsed = 0f;
+        var elapsed = 0f;
         while (elapsed < recoilDuration)
         {
-            Vector3 step = (rotationAmount / recoilDuration) * Time.deltaTime;
+            var step = rotationAmount / recoilDuration * Time.deltaTime;
             transform.Rotate(step);
             elapsed += Time.deltaTime;
             yield return null;
@@ -56,7 +55,7 @@ public class Pistol : MonoBehaviour
         elapsed = 0f;
         while (elapsed < returnDuration)
         {
-            Vector3 step = (-rotationAmount / returnDuration) * Time.deltaTime;
+            var step = -rotationAmount / returnDuration * Time.deltaTime;
             transform.Rotate(step);
             elapsed += Time.deltaTime;
             yield return null;
@@ -73,38 +72,39 @@ public class Pistol : MonoBehaviour
         aud.pitch = Random.Range(1f, 1.1f);
         aud.PlayOneShot(shootSound);
         RaycastHit hit;
-        Vector3 endPos = firePoint.position + firePoint.forward * range;
+        var endPos = firePoint.position + firePoint.forward * range;
 
-        if (Physics.Raycast(Camera.main.transform.position, firePoint.forward, out hit, range, LayerMask.GetMask("Limb")))
+        if (Physics.Raycast(Camera.main.transform.position, firePoint.forward, out hit, range,
+                LayerMask.GetMask("Limb")))
         {
             DealDamage(hit.transform.gameObject, primaryDamage, 300, hit.point);
             endPos = hit.point;
         }
 
-        else if (Physics.BoxCast(Camera.main.transform.position, Vector3.one * aimAssist, firePoint.forward, out hit, firePoint.rotation, range, LayerMask.GetMask("Limb")))
+        else if (Physics.BoxCast(Camera.main.transform.position, Vector3.one * aimAssist, firePoint.forward, out hit,
+                     firePoint.rotation, range, LayerMask.GetMask("Limb")))
         {
             // choose the best limb to hit (closest to the cursor(dot product of the forward vector and the vector from the camera to the hit point))
-            RaycastHit[] hits = Physics.BoxCastAll(Camera.main.transform.position, Vector3.one * aimAssist, firePoint.forward, firePoint.rotation, range, LayerMask.GetMask("Limb"));
+            var hits = Physics.BoxCastAll(Camera.main.transform.position, Vector3.one * aimAssist, firePoint.forward,
+                firePoint.rotation, range, LayerMask.GetMask("Limb"));
 
             var flag = false;
-            foreach (RaycastHit h in hits)
-            {
+            foreach (var h in hits)
                 if (h.transform.gameObject.CompareTag("Head"))
                 {
                     hit = h;
                     flag = true;
                     break;
                 }
-            }
 
             if (!flag)
             {
                 // TODO: make this work
-                float closestDistance = float.MaxValue;
-                Vector3 cursorPositionInWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                foreach (RaycastHit h in hits)
+                var closestDistance = float.MaxValue;
+                var cursorPositionInWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                foreach (var h in hits)
                 {
-                    float distance = Vector3.Distance(h.point, cursorPositionInWorld);
+                    var distance = Vector3.Distance(h.point, cursorPositionInWorld);
                     if (distance < closestDistance)
                     {
                         closestDistance = distance;
@@ -119,7 +119,6 @@ public class Pistol : MonoBehaviour
 
         else if (Physics.Raycast(Camera.main.transform.position, firePoint.forward, out hit, range, layerMask))
         {
-
             endPos = hit.point;
         }
 
@@ -134,13 +133,9 @@ public class Pistol : MonoBehaviour
         if (!cm.CheckCooldown("Pistol")) return;
 
         if (enableRicochet)
-        {
             StartCoroutine(RicochetShot());
-        }
         else
-        {
             StartCoroutine(LaserShot());
-        }
 
         StartCoroutine(PlayReloadAnimation(0.15f, 0.8f, 100f));
         cm.AddCooldown("Pistol", fireRate * 2);
@@ -151,42 +146,36 @@ public class Pistol : MonoBehaviour
         aud.pitch = Random.Range(.8f, .9f);
         aud.PlayOneShot(shootSound);
         RaycastHit hit;
-        Vector3 startPos = firePoint.position;
-        Vector3 endPos = firePoint.position + firePoint.forward * range;
+        var startPos = firePoint.position;
+        var endPos = firePoint.position + firePoint.forward * range;
 
         if (Physics.Raycast(Camera.main.transform.position, firePoint.forward, out hit, range, layerMask))
-        {
             endPos = hit.point;
-        }
 
-        InstantiateLaser(startPos, endPos, Color.white, new Color(173,0,153,1), 0.45f);
+        InstantiateLaser(startPos, endPos, Color.white, new Color(173, 0, 153, 1), 0.45f);
 
-        if (Physics.BoxCast(Camera.main.transform.position, Vector3.one * laserWidth , firePoint.forward, out hit, firePoint.rotation, range, LayerMask.GetMask("Limb")))
+        if (Physics.BoxCast(Camera.main.transform.position, Vector3.one * laserWidth, firePoint.forward, out hit,
+                firePoint.rotation, range, LayerMask.GetMask("Limb")))
         {
-            HashSet<Transform> hitEnemies = new HashSet<Transform>();
-            RaycastHit[] hits = Physics.BoxCastAll(Camera.main.transform.position, Vector3.one * laserWidth, firePoint.forward, firePoint.rotation, range, LayerMask.GetMask("Limb"));
+            var hitEnemies = new HashSet<Transform>();
+            var hits = Physics.BoxCastAll(Camera.main.transform.position, Vector3.one * laserWidth, firePoint.forward,
+                firePoint.rotation, range, LayerMask.GetMask("Limb"));
 
             // sort the hits by distance from the camera
-            System.Array.Sort(hits, (x, y) => Vector3.Distance(x.point, Camera.main.transform.position).CompareTo(Vector3.Distance(y.point, Camera.main.transform.position)));
+            Array.Sort(hits,
+                (x, y) => Vector3.Distance(x.point, Camera.main.transform.position)
+                    .CompareTo(Vector3.Distance(y.point, Camera.main.transform.position)));
 
-            foreach (RaycastHit h in hits)
+            foreach (var h in hits)
             {
-                Transform hitEnemy = h.transform;
+                var hitEnemy = h.transform;
 
-                while (hitEnemy.parent != null && hitEnemy.parent.gameObject.name != "Gore" && hitEnemy.parent.gameObject.name != "Enemies")
-                {
-                    hitEnemy = hitEnemy.parent;
-                }
+                while (hitEnemy.parent != null && hitEnemy.parent.gameObject.name != "Gore" &&
+                       hitEnemy.parent.gameObject.name != "Enemies") hitEnemy = hitEnemy.parent;
 
-                if (hitEnemies.Count > 4)
-                {
-                    break;
-                }
+                if (hitEnemies.Count > 4) break;
 
-                if (hitEnemies.Contains(hitEnemy))
-                {
-                    continue;
-                }
+                if (hitEnemies.Contains(hitEnemy)) continue;
 
                 hitEnemies.Add(hitEnemy);
 
@@ -202,9 +191,9 @@ public class Pistol : MonoBehaviour
                 // TimeManager.Instance.FreezeTime(0.09f);
                 TimeManager.Instance.SlowMotion(0.01f, 0.1f, true);
                 yield return new WaitForSecondsRealtime(0.1f);
-
             }
         }
+
         yield return null;
     }
 
@@ -215,23 +204,20 @@ public class Pistol : MonoBehaviour
         aud.pitch = Random.Range(.8f, .9f);
         aud.PlayOneShot(shootSound);
         RaycastHit hit;
-        Vector3 startPos = firePoint.position;
-        Vector3 endPos = firePoint.position + firePoint.forward * range;
-        Vector3 newDir = firePoint.forward;
+        var startPos = firePoint.position;
+        var endPos = firePoint.position + firePoint.forward * range;
+        var newDir = firePoint.forward;
         if (Physics.Raycast(Camera.main.transform.position, newDir, out hit, range, layerMask))
         {
-            if(hit.transform.gameObject.layer == LayerMask.NameToLayer("Limb"))
-            {
+            if (hit.transform.gameObject.layer == LayerMask.NameToLayer("Limb"))
                 DealDamage(hit.transform.gameObject, secondaryDamage, 1000, hit.point);
-            }
             else
-            {
                 newDir = Vector3.Reflect(newDir, hit.normal);
-            }
             endPos = hit.point;
         }
+
         InstantiateLaser(startPos, endPos, Color.white, Color.red, 0.1f, 0.6f);
-        int a = 0;
+        var a = 0;
         while (a < 4)
         {
             startPos = endPos;
@@ -239,7 +225,7 @@ public class Pistol : MonoBehaviour
             endPos = startPos + newDir * range; // Use newDir instead of firePoint.forward
             if (Physics.Raycast(startPos, newDir, out hit2, range)) // Use startPos instead of endPos
             {
-                if(hit2.transform.gameObject.layer == LayerMask.NameToLayer("Limb"))
+                if (hit2.transform.gameObject.layer == LayerMask.NameToLayer("Limb"))
                 {
                     DealDamage(hit2.transform.gameObject, secondaryDamage, 1000, hit2.point);
                 }
@@ -249,9 +235,10 @@ public class Pistol : MonoBehaviour
                     InstantiateImpactEffect(hit2);
                     a++;
                 }
-                endPos = hit2.point;
 
+                endPos = hit2.point;
             }
+
             InstantiateLaser(startPos, endPos, Color.white, Color.red, 0.1f, 0.6f);
             yield return new WaitForSeconds(0.1f);
         }
@@ -263,7 +250,7 @@ public class Pistol : MonoBehaviour
 
 
         // play impact sound
-        AudioSource bounceSoundSource = new GameObject("BounceSound").AddComponent<AudioSource>();
+        var bounceSoundSource = new GameObject("BounceSound").AddComponent<AudioSource>();
         bounceSoundSource.outputAudioMixerGroup = aud.outputAudioMixerGroup;
         bounceSoundSource.volume = 0.15f;
         bounceSoundSource.pitch = Random.Range(0.9f, 1);
@@ -278,17 +265,15 @@ public class Pistol : MonoBehaviour
 
     private void DealDamage(GameObject target, int damage, float bulletForce, Vector3 hitPoint)
     {
-        EnemyIdentifier ei = target.GetComponentInParent<EnemyIdentifier>();
-        if (ei != null)
-        {
-            ei.GetHit(target, damage, bulletForce, hitPoint);
-        }
+        var ei = target.GetComponentInParent<EnemyIdentifier>();
+        if (ei != null) ei.GetHit(target, damage, bulletForce, hitPoint);
     }
 
-    private void InstantiateLaser(Vector3 pos1, Vector3 pos2, Color startColor, Color endColor, float width = .015f, float duration = .35f)
+    private void InstantiateLaser(Vector3 pos1, Vector3 pos2, Color startColor, Color endColor, float width = .015f,
+        float duration = .35f)
     {
-        GameObject laser = Instantiate(laserPrefab, pos1, Quaternion.identity);
-        LineRenderer lineRenderer = laser.GetComponent<LineRenderer>();
+        var laser = Instantiate(laserPrefab, pos1, Quaternion.identity);
+        var lineRenderer = laser.GetComponent<LineRenderer>();
         lineRenderer.startColor = startColor;
         lineRenderer.endColor = endColor;
         lineRenderer.SetPosition(0, pos1);

@@ -1,35 +1,37 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using DG.Tweening;
-using UnityEngine.InputSystem;
+using UnityEngine;
+using UnityEngine.Serialization;
 
 public class CameraController : MonoSingleton<CameraController>
 {
-    [Header("Camera Settings")]
-    [SerializeField] private float sensitivity;
-    private PlayerController pc;
+    [Header("Camera Settings")] [SerializeField]
+    private float sensitivity;
+
     [SerializeField] private Camera cam;
-    [SerializeField] private float fov;
-    private float currentFov;
-    private float lookRotation;
+
+    [FormerlySerializedAs("fov")] [SerializeField]
+    private float defaultFov;
+
     public Vector2 look;
     [SerializeField] private float fovTransitionTime;
     [SerializeField] private float dashFovDif;
+    private float currentFov;
+    private float lookRotation;
+    private PlayerController pc;
 
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         pc = MonoSingleton<PlayerController>.Instance;
-        currentFov = fov;
+        currentFov = defaultFov;
     }
 
     private void Update()
     {
         RotateCamera();
         DashFov();
-        if(pc.movementState != MovementState.WALLRUNNING) LeanCameraTowardsPlayerMovement(pc.moveInput);
+        if (pc.movementState != MovementState.WALLRUNNING) LeanCameraTowardsPlayerMovement(pc.moveInput);
     }
 
     private void DashFov()
@@ -37,32 +39,20 @@ public class CameraController : MonoSingleton<CameraController>
         if (pc.dashing)
         {
             if (Vector3.Dot(pc.dashDirection, transform.forward) > 0.95f)
-            {
-                SetFOV(fov + dashFovDif);
-            }
-            else if (Vector3.Dot(pc.dashDirection, transform.forward) < 0.95f)
-            {
-                SetFOV(fov - dashFovDif);
-            }
+                SetFOV(defaultFov + dashFovDif);
+            else if (Vector3.Dot(pc.dashDirection, transform.forward) < 0.95f) SetFOV(defaultFov - dashFovDif);
         }
         else
         {
-            SetFOV(fov);
+            SetFOV(defaultFov);
         }
     }
 
-    public void LeanCameraTowardsPlayerMovement(Vector2 moveInput)
+    private void LeanCameraTowardsPlayerMovement(Vector2 moveInput)
     {
-        // if (moveInput != Vector2.zero/* && !pc.gc.touchingGround*/)
-        // {
-            var multiplier = 1f;
-            if (!pc.gc.touchingGround) multiplier *= 2f;
-            transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, -moveInput.x * 1.5f * multiplier), 0.2f);
-        // }
-        // else if (transform.localEulerAngles.z > 0f)
-        // {
-        //     ResetLean();
-        // }
+        var multiplier = 1f;
+        if (!pc.gc.touchingGround) multiplier *= 2f;
+        transform.DOLocalRotate(new Vector3(transform.localEulerAngles.x, 0f, -moveInput.x * 1.5f * multiplier), 0.2f);
     }
 
     public void LeanCameraByAngle(float angle)
@@ -79,7 +69,7 @@ public class CameraController : MonoSingleton<CameraController>
     {
         look = Vector2.zero;
         lookRotation = 0f;
-        transform.eulerAngles = new Vector3(0f,0f, 0f);
+        transform.eulerAngles = new Vector3(0f, 0f, 0f);
         transform.DOKill(this);
     }
 
@@ -100,12 +90,10 @@ public class CameraController : MonoSingleton<CameraController>
             );
     }
 
-    private float SetFOV(float fov)
+    private void SetFOV(float fov)
     {
-
         DOVirtual.Float(currentFov, fov, fovTransitionTime, CurrentFov);
         cam.fieldOfView = currentFov;
-        return cam.fieldOfView;
     }
 
     private void CurrentFov(float value)
@@ -115,6 +103,5 @@ public class CameraController : MonoSingleton<CameraController>
 
     public void ShowSpeedLines()
     {
-
     }
 }

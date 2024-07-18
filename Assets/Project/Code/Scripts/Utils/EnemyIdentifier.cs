@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyIdentifier : MonoBehaviour
@@ -9,17 +7,11 @@ public class EnemyIdentifier : MonoBehaviour
 
     private void Start()
     {
-        if (type == EnemyType.Zombie)
-        {
-            zombie = GetComponent<Zombie>();
-        }
+        if (type == EnemyType.Zombie) zombie = GetComponent<Zombie>();
     }
 
     public void GetHit(GameObject target, int damage, float bulletForce, Vector3 hitPoint)
     {
-        if (type == EnemyType.Zombie)
-        {
-            zombie.GetHit(target, damage, bulletForce, hitPoint);
-        }
+        if (type == EnemyType.Zombie) zombie.GetHit(target, damage, bulletForce, hitPoint);
     }
 }

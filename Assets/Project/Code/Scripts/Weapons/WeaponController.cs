@@ -1,28 +1,24 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class WeaponController : MonoSingleton<WeaponController>
 {
-
     public GameObject[] weapons;
-    [SerializeField] private int currentWeaponIndex = 0;
+    [SerializeField] private int currentWeaponIndex;
     public bool isDeflecting;
-    private PlayerController pc;
     [SerializeField] private bool fullDeflect;
-    private int previousWeaponIndex;
     [SerializeField] private AudioClip deflectSound;
     [SerializeField] private AudioSource aud;
     private InputManager im;
+    private PlayerController pc;
+    private int previousWeaponIndex;
 
     private void Start()
     {
-       im = MonoSingleton<InputManager>.Instance;
-       pc = MonoSingleton<PlayerController>.Instance;
+        im = MonoSingleton<InputManager>.Instance;
+        pc = MonoSingleton<PlayerController>.Instance;
         // get all children of the weapon controller as weapons
         weapons = new GameObject[transform.childCount];
-        for (int i = 0; i < transform.childCount; i++)
+        for (var i = 0; i < transform.childCount; i++)
         {
             weapons[i] = transform.GetChild(i).gameObject;
             weapons[i].SetActive(false);
@@ -32,11 +28,26 @@ public class WeaponController : MonoSingleton<WeaponController>
         weapons[currentWeaponIndex].SetActive(true);
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (isDeflecting)
+            if (other.gameObject.CompareTag("Projectile"))
+            {
+                TimeManager.Instance.SlowMotion(0.05f, 0.05f);
+                aud.pitch = Random.Range(0.75f, 1f);
+                aud.PlayOneShot(deflectSound);
+
+                var direction = Camera.main.transform.forward;
+                direction += new Vector3(Random.Range(-0.02f, 0.02f), Random.Range(-0.02f, 0.02f),
+                    Random.Range(-0.02f, 0.02f));
+                other.gameObject.GetComponent<Projectile>().Deflect(direction);
+            }
+    }
+
     public void SwitchWeaponIndex(int index)
     {
         if (index > weapons.Length - 1 || index < 0) return;
         if (weapons[index].name == "Deflect") return;
-        // if (isDeflecting) return;
         if (isDeflecting)
         {
             CancelInvoke(nameof(StopDeflect));
@@ -51,8 +62,7 @@ public class WeaponController : MonoSingleton<WeaponController>
 
     public void SwitchWeaponName(string weaponName)
     {
-        for (int i = 0; i < weapons.Length; i++)
-        {
+        for (var i = 0; i < weapons.Length; i++)
             if (weapons[i].name == weaponName)
             {
                 weapons[currentWeaponIndex].SetActive(false);
@@ -60,7 +70,6 @@ public class WeaponController : MonoSingleton<WeaponController>
                 weapons[currentWeaponIndex].SetActive(true);
                 break;
             }
-        }
     }
 
     public void PrimaryFire()
@@ -77,25 +86,6 @@ public class WeaponController : MonoSingleton<WeaponController>
         weapons[currentWeaponIndex].GetComponent<WeaponIdentifier>().SecondaryFire();
     }
 
-    // public void Deflect()
-    // {
-    //     if (im.deflectPressed)
-    //     {
-    //         StopAllCoroutines();
-    //         if (!isDeflecting && CooldownManager.Instance.CheckCooldown("Deflect"))
-    //         {
-    //             StartCoroutine(DeflectCoroutine());
-    //         }
-    //         return;
-    //     }
-    //
-    //     if (isDeflecting)
-    //     {
-    //         StopAllCoroutines();
-    //         StartCoroutine(StopDeflectCoroutine());
-    //     }
-    // }
-
     public void Deflect()
     {
         isDeflecting = true;
@@ -108,27 +98,7 @@ public class WeaponController : MonoSingleton<WeaponController>
 
     public void StopDeflect()
     {
-        // isDeflecting = false;
-        // fullDeflect = false;
         SwitchWeaponIndex(previousWeaponIndex);
         CooldownManager.Instance.AddCooldown("Deflect", 0.5f);
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (isDeflecting)
-        {
-            if (other.gameObject.CompareTag("Projectile"))
-            {
-                // TimeManager.Instance.FreezeTime(0.05f);
-                TimeManager.Instance.SlowMotion(0.05f, 0.05f);
-                aud.pitch = UnityEngine.Random.Range(0.75f, 1f);
-                aud.PlayOneShot(deflectSound);
-
-                var direction = Camera.main.transform.forward;
-                direction += new Vector3(UnityEngine.Random.Range(-0.02f, 0.02f), UnityEngine.Random.Range(-0.02f, 0.02f), UnityEngine.Random.Range(-0.02f, 0.02f));
-                other.gameObject.GetComponent<Projectile>().Deflect(direction);
-            }
-        }
     }
 }

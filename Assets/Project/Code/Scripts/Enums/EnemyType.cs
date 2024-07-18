@@ -1,4 +1,4 @@
 public enum EnemyType
 {
-    Zombie,
+    Zombie
 }
