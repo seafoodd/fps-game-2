@@ -36,7 +36,7 @@ public class Projectile : MonoBehaviour
     {
         if(other.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
-            Debug.Log("Hit ground");
+            // Debug.Log("Hit ground");
             Destroy(gameObject);
         }
 

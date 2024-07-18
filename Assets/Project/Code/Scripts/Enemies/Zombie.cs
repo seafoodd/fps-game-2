@@ -33,7 +33,7 @@ public class Zombie : Damageable
             if (hitLimb == "Head")
             {
                 damage *= 2;
-                Debug.Log("Headshot!");
+                // Debug.Log("Headshot!");
                 InstantiateBloodEffect(hitPoint, 20, true);
             }
             else
@@ -42,7 +42,7 @@ public class Zombie : Damageable
             }
 
             health -= damage;
-            Debug.Log($"Damage taken: {damage}, health remaining: {health}");
+            // Debug.Log($"Damage taken: {damage}, health remaining: {health}");
 
             if (health <= 0)
             {

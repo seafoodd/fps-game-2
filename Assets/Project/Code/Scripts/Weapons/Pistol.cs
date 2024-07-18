@@ -198,7 +198,7 @@ public class Pistol : MonoBehaviour
                 }
 
                 DealDamage(h.transform.gameObject, secondaryDamage, 1000, h.point);
-                Debug.Log("HIT" + hitEnemies.Count);
+                // Debug.Log("HIT" + hitEnemies.Count);
                 // TimeManager.Instance.FreezeTime(0.09f);
                 TimeManager.Instance.SlowMotion(0.01f, 0.1f, true);
                 yield return new WaitForSecondsRealtime(0.1f);

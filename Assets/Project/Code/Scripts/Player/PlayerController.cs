@@ -186,7 +186,7 @@ public class PlayerController : MonoSingleton<PlayerController>
                 // if (targetVelocity.magnitude < currentVelocityHorizontal.magnitude)
                 //     targetVelocity += targetVelocity * momentum;
 
-                Debug.Log(currentVelocityHorizontal.magnitude + " " + momentum + " " + targetVelocity.magnitude);
+                // Debug.Log(currentVelocityHorizontal.magnitude + " " + momentum + " " + targetVelocity.magnitude);
                 targetVelocity = Vector3.ClampMagnitude(targetVelocity, 20f);
 
                 if (targetVelocity.magnitude > 0f)
@@ -250,6 +250,12 @@ public class PlayerController : MonoSingleton<PlayerController>
         SetMovementState(MovementState.WALLRUNNING);
         PlayStepSounds();
         targetVelocity = wallRunDirNew * (speed * 1.25f + wallRunningSeconds * 1.5f);
+        // targetVelocity += (Vector3.up * 50f) / Mathf.Clamp(Vector3.Dot(wallRunDirNew, wallParallel), 0.1f, 1f) * (wallRunDirNew.y < 0f ? 1f : 0f);
+        if(wallRunDirNew.y > 0.5f)
+        {
+            // Debug.Log("climbing");
+            targetVelocity += Vector3.up * 10f;
+        }
 
         var leanAngle = 8f * Vector3.Dot(wallRunDirNew, wallParallel);
 
@@ -452,7 +458,7 @@ public class PlayerController : MonoSingleton<PlayerController>
         aud.pitch = 0.5f + 0.25f / (int)CooldownManager.Instance.dashCharges;
         aud.PlayOneShot(dashSound, 0.15f);
         CooldownManager.Instance.dashCharges--;
-        // var initialVelocity = rb.velocity;
+        var initialVelocity =currentVelocityHorizontal;
         // initialVelocity.y = 0f;
         rb.velocity = Vector3.zero;
         fallTime = 0f;
@@ -470,14 +476,15 @@ public class PlayerController : MonoSingleton<PlayerController>
         while (t < 1)
         {
             t += Time.deltaTime / f;
-            transform.position = Vector3.LerpUnclamped(startPosition, targetPosition, t);
+            // transform.position = Vector3.LerpUnclamped(startPosition, targetPosition, t);
+            rb.MovePosition(Vector3.LerpUnclamped(startPosition, targetPosition, t));
             yield return null;
         }
 
         col.height = initialHeight;
         col.center = initialCenter;
         rb.velocity = Vector3.zero;
-        // rb.velocity = Vector3.Project(initialVelocity, targetPosition - startPosition);
+        rb.velocity = Vector3.Project(initialVelocity, targetPosition - startPosition);
         rb.useGravity = true;
         col.enabled = true;
         dashing = false;

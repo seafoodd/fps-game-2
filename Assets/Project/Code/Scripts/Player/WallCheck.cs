@@ -34,11 +34,12 @@ public class WallCheck : MonoSingleton<WallCheck>
             // hitInfo.normal = (other.ClosestPoint(transform.position) - wallCenter).normalized;
 
             RaycastHit hit;
-            Vector3 directionToWall = other.ClosestPoint(transform.position) - transform.position;
+            // Vector3 directionToWall = other.ClosestPoint(transform.position) - transform.position;
+            Vector3 directionToWall =  other.bounds.center - transform.position;
             if (Physics.Raycast(transform.position, directionToWall, out hit, 10f, layerMask: 1 << LayerMask.NameToLayer("Ground")))
             {
                 // Store the normal of the hit surface
-                Debug.Log("hit " + hit.collider.name);
+                // Debug.Log("hit " + hit.collider.name);
                 hitInfo.normal = hit.normal;
             }
 
@@ -63,7 +64,7 @@ public class WallCheck : MonoSingleton<WallCheck>
             if (Physics.Raycast(transform.position, directionToWall, out hit, 10f, layerMask: 1 << LayerMask.NameToLayer("Ground")))
             {
                 // Store the normal of the hit surface
-                Debug.Log("hit " + hit.collider.name);
+                // Debug.Log("hit " + hit.collider.name);
                 hitInfo.normal = hit.normal;
             }
 
