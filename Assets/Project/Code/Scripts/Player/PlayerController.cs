@@ -138,6 +138,11 @@ public class PlayerController : MonoSingleton<PlayerController>
         fallTime = 0f;
         airTime = 0f;
         wallRunningSeconds = 0f;
+        col.height = 1.65f;
+        col.center = Vector3.zero;
+        // rb.useGravity = true;
+        col.enabled = true;
+        dashing = false;
 
         cc.ResetCamera();
         MonoSingleton<GoreZone>.Instance.ResetGore();
@@ -420,7 +425,7 @@ public class PlayerController : MonoSingleton<PlayerController>
     private IEnumerator BlinkToPosition(Vector3 targetPosition, float f)
     {
         aud.pitch = 0.5f + 0.25f / (int)CooldownManager.Instance.dashCharges;
-        aud.PlayOneShot(dashSound, 0.15f);
+        aud.PlayOneShot(dashSound, 0.2f);
         CooldownManager.Instance.dashCharges--;
         var initialVelocity = currentVelocityHorizontal;
         rb.velocity = Vector3.zero;
